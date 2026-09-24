@@ -15,6 +15,7 @@ Bilingual (Arabic RTL / English LTR) marketing site for Circle — AI automation
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_ANON_KEY` | Supabase anon key (used server-side only; the browser never talks to Supabase) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only key: inserts leads and creates accounts for accepted invitations. Never expose it |
+| `N8N_BOOKING_WEBHOOK_URL` | Optional n8n webhook called after each online booking (event `appointment.booked`) — use it to send the WhatsApp confirmation |
 | `SITE_URL` | Public site URL used in invitation links, e.g. `https://circle.sa` |
 | `N8N_LEAD_WEBHOOK_URL` | Optional n8n webhook notified of each new lead |
 | `N8N_WEBHOOK_SECRET` | Optional, sent as `x-circle-secret` header |
@@ -103,6 +104,14 @@ schema.org `Dentist` data for search engines and are regenerated at most once a 
 
 **Demo clinic:** run `supabase/seed/demo_clinic.sql` to get a published sample at `/ar/c/noor`
 (no real patient data) — useful for sales demos.
+
+### Online booking (`/ar/c/{slug}/book`)
+
+Four steps: service → doctor (or "any available") → day & time → details. The page loads 14 days of
+availability in one call (`GET /api/sites/{slug}/availability`) so empty days are disabled up front.
+`POST /api/sites/{slug}/book` validates input, calls `book_appointment` (which re-checks the slot),
+and notifies `N8N_BOOKING_WEBHOOK_URL` if set. If someone else takes the slot first, the patient is
+told and sent back to a refreshed list of times. The confirmation offers an `.ics` calendar file.
 
 ### Tests
 

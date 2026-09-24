@@ -176,6 +176,10 @@ export function ModernTemplate(p: TemplateProps) {
                       </span>
                       <h3 className="mt-5 text-xl font-bold">{s.name}</h3>
                       {s.description && <p className="mt-2 flex-1 leading-relaxed text-site-muted">{s.description}</p>}
+                      <a href={p.serviceBookHref(s.id)} className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-site-primary hover:underline">
+                        <CalendarCheck className="size-4" />
+                        {t.services.bookThis}
+                      </a>
                       <div className="mt-5 flex items-center justify-between border-t border-site-line pt-4 text-sm">
                         <span className="flex items-center gap-1.5 text-site-muted">
                           <Clock className="size-4" />

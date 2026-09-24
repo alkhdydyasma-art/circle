@@ -10,6 +10,8 @@ export type TemplateProps = {
   t: SiteStrings;
   /** Where "Book" buttons go (booking page, or WhatsApp until booking is enabled). */
   bookHref: string;
+  /** Booking link preselecting one service. */
+  serviceBookHref: (serviceId: string) => string;
   whatsappHref?: string;
   telHref?: string;
   logoUrl?: string;

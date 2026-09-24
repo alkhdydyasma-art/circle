@@ -43,7 +43,7 @@ const siteSchema = z.object({
 export type PublicSite = z.infer<typeof siteSchema>;
 
 // Anonymous client: the public site only ever uses the SECURITY DEFINER functions.
-const anonClient = () => {
+export const anonClient = () => {
   const { url, anonKey } = supabaseEnv();
   return createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
 };

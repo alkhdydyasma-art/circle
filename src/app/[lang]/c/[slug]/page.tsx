@@ -73,7 +73,8 @@ export default async function ClinicSitePage({ params }: PageProps<"/[lang]/c/[s
         site={site}
         lang={lang}
         t={t}
-        bookHref={whatsappHref ?? telHref ?? "#contact"}
+        bookHref={`/${lang}/c/${slug}/book`}
+        serviceBookHref={(id) => `/${lang}/c/${slug}/book?service=${id}`}
         whatsappHref={whatsappHref}
         telHref={telHref}
         logoUrl={safeHttpsUrl(brand.logo_url)}
