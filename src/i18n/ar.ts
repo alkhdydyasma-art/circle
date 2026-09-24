@@ -11,6 +11,7 @@ const ar = {
     pricing: "الباقات",
     cta: "اطلب عرضاً تجريبياً",
     switchLang: "English",
+    theme: "تبديل الوضع الليلي",
   },
   hero: {
     badge: "وكيل ذكاء اصطناعي يعمل على واتساب 24/7",
@@ -114,6 +115,9 @@ const ar = {
       { label: "نسبة الحضور", value: "94%" },
     ],
     listTitle: "المواعيد القادمة",
+    heatmapTitle: "نشاط الحجوزات — آخر 20 أسبوعاً",
+    less: "أقل",
+    more: "أكثر",
     rows: [
       { name: "عبدالله م.", service: "تنظيف أسنان", time: "4:30 م", source: "واتساب", whatsapp: true },
       { name: "ريم س.", service: "تقويم", time: "5:00 م", source: "الموقع", whatsapp: false },

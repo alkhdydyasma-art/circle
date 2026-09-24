@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Reveal } from "./Reveal";
 
 export function SectionHeading({
   eyebrow,
@@ -10,11 +11,11 @@ export function SectionHeading({
   subtitle?: string;
 }) {
   return (
-    <div className="mx-auto max-w-2xl text-center">
-      <p className="text-sm font-semibold tracking-wide text-teal">{eyebrow}</p>
-      <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{title}</h2>
-      {subtitle && <p className="mt-4 text-lg text-muted">{subtitle}</p>}
-    </div>
+    <Reveal className="max-w-2xl">
+      <p className="text-sm font-medium text-teal ltr:font-mono ltr:tracking-widest ltr:uppercase">{eyebrow}</p>
+      <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h2>
+      {subtitle && <p className="mt-4 text-lg leading-relaxed text-muted">{subtitle}</p>}
+    </Reveal>
   );
 }
 
@@ -28,8 +29,8 @@ export function Section({
   children: ReactNode;
 }) {
   return (
-    <section id={id} className={`scroll-mt-20 py-24 ${className}`}>
-      <div className="mx-auto max-w-6xl px-4">{children}</div>
+    <section id={id} className={`scroll-mt-20 py-24 md:py-32 ${className}`}>
+      <div className="mx-auto max-w-6xl px-6 md:px-8">{children}</div>
     </section>
   );
 }

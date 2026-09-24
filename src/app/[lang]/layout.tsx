@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
+import { IBM_Plex_Sans_Arabic, Inter, Readex_Pro } from "next/font/google";
 import "../globals.css";
 import { dirOf, getDictionary, hasLocale, locales } from "@/i18n";
 
@@ -11,6 +11,11 @@ const plexArabic = IBM_Plex_Sans_Arabic({
 });
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
+
+const readex = Readex_Pro({ variable: "--font-readex", subsets: ["arabic", "latin"] });
+
+// Dark by default (like the reference design); runs before paint to avoid a flash.
+const themeScript = `try{if(localStorage.getItem("theme")==="light")document.documentElement.classList.remove("dark")}catch(e){}`;
 
 export function generateStaticParams() {
   return locales.map((lang) => ({ lang }));
@@ -36,8 +41,12 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
     <html
       lang={lang}
       dir={dirOf(lang)}
-      className={`${plexArabic.variable} ${inter.variable} antialiased`}
+      className={`dark ${plexArabic.variable} ${inter.variable} ${readex.variable} antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-screen">{children}</body>
     </html>
   );

@@ -13,6 +13,7 @@ const en: Dictionary = {
     pricing: "Pricing",
     cta: "Book a demo",
     switchLang: "العربية",
+    theme: "Toggle dark mode",
   },
   hero: {
     badge: "An AI agent answering on WhatsApp 24/7",
@@ -116,6 +117,9 @@ const en: Dictionary = {
       { label: "Show-up rate", value: "94%" },
     ],
     listTitle: "Upcoming appointments",
+    heatmapTitle: "Booking activity — last 20 weeks",
+    less: "Less",
+    more: "More",
     rows: [
       { name: "Abdullah M.", service: "Cleaning", time: "4:30 PM", source: "WhatsApp", whatsapp: true },
       { name: "Reem S.", service: "Orthodontics", time: "5:00 PM", source: "Website", whatsapp: false },

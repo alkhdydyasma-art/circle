@@ -1,25 +1,30 @@
 import type { Dictionary } from "@/i18n";
+import { Reveal } from "./Reveal";
 import { Section, SectionHeading } from "./Section";
 
+// Vertical timeline, echoing the reference site's work-experience list.
 export function HowItWorks({ t }: { t: Dictionary }) {
   return (
-    <Section id="how" className="bg-surface">
-      <SectionHeading eyebrow={t.how.eyebrow} title={t.how.title} />
-      <ol className="relative mt-14 grid gap-6 md:grid-cols-4">
-        <div
-          aria-hidden
-          className="bg-brand-gradient absolute inset-x-[12%] top-6 hidden h-0.5 opacity-30 md:block"
-        />
-        {t.how.steps.map((s, i) => (
-          <li key={s.title} className="relative text-center">
-            <span className="bg-brand-gradient relative mx-auto flex size-12 items-center justify-center rounded-full text-lg font-bold text-white ring-8 ring-surface">
-              {i + 1}
-            </span>
-            <h3 className="mt-5 font-semibold">{s.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted">{s.text}</p>
-          </li>
-        ))}
-      </ol>
+    <Section id="how" className="border-y border-line">
+      <div className="grid gap-12 lg:grid-cols-[1fr_1.2fr]">
+        <SectionHeading eyebrow={t.how.eyebrow} title={t.how.title} />
+        <ol className="relative">
+          <span aria-hidden className="absolute start-7 top-4 bottom-4 w-px bg-line" />
+          {t.how.steps.map((s, i) => (
+            <Reveal key={s.title} delay={0.08 * i}>
+              <li className="relative flex items-start gap-6 pb-10 last:pb-0">
+                <span className="relative grid size-14 shrink-0 place-items-center rounded-lg border border-line bg-bg font-mono text-lg text-teal">
+                  0{i + 1}
+                </span>
+                <div className="pt-2">
+                  <h3 className="text-xl font-semibold">{s.title}</h3>
+                  <p className="mt-2 leading-relaxed text-muted">{s.text}</p>
+                </div>
+              </li>
+            </Reveal>
+          ))}
+        </ol>
+      </div>
     </Section>
   );
 }

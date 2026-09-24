@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { MessageCircle } from "lucide-react";
+import { Reveal } from "./Reveal";
 import type { Dictionary, Locale } from "@/i18n";
 
 type Status = "idle" | "sending" | "success" | "error";
@@ -36,22 +37,23 @@ export function LeadSection({ lang, t }: { lang: Locale; t: Dictionary }) {
   ] as const;
 
   return (
-    <section id="demo" className="scroll-mt-20 py-24">
-      <div className="mx-auto max-w-6xl px-4">
-        <div className="bg-brand-gradient relative overflow-hidden rounded-[2.5rem] p-8 text-white shadow-2xl shadow-brand/25 md:p-14">
-          <div className="absolute -end-24 -top-24 size-72 rounded-full bg-white/10" aria-hidden />
+    <section id="demo" className="scroll-mt-20 py-24 md:py-32">
+      <Reveal className="mx-auto max-w-6xl px-6 md:px-8">
+        <div className="relative overflow-hidden rounded-2xl border border-line bg-card p-8 md:p-14">
+          <div className="absolute -end-32 -top-32 size-96 rounded-full bg-teal/15 blur-3xl" aria-hidden />
+          <div className="absolute -start-32 -bottom-32 size-96 rounded-full bg-brand/10 blur-3xl" aria-hidden />
           <div className="relative grid gap-10 lg:grid-cols-2 lg:items-center">
             <div>
-              <p className="text-sm font-semibold text-white/80">{l.eyebrow}</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{l.title}</h2>
-              <p className="mt-4 text-lg text-white/85">{l.subtitle}</p>
-              <p className="mt-6 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm">
-                <MessageCircle className="size-4" />
+              <p className="text-sm font-medium text-teal ltr:font-mono ltr:tracking-widest ltr:uppercase">{l.eyebrow}</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">{l.title}</h2>
+              <p className="mt-4 text-lg leading-relaxed text-muted">{l.subtitle}</p>
+              <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-line bg-bg px-4 py-2 text-sm text-muted">
+                <MessageCircle className="size-4 text-whatsapp" />
                 {l.note}
               </p>
             </div>
 
-            <form onSubmit={onSubmit} className="space-y-3 rounded-3xl bg-white p-6 text-ink shadow-xl">
+            <form onSubmit={onSubmit} className="space-y-3 rounded-xl border border-line bg-bg p-6 shadow-2xl shadow-black/10">
               {fields.map((f) => (
                 <label key={f.name} className="block">
                   <span className="mb-1 block text-sm font-medium text-muted">{f.label}</span>
@@ -61,7 +63,7 @@ export function LeadSection({ lang, t }: { lang: Locale; t: Dictionary }) {
                     type={f.type}
                     autoComplete={f.autoComplete}
                     dir={f.type === "tel" ? "ltr" : undefined}
-                    className="w-full rounded-xl border border-line bg-surface px-4 py-2.5 outline-none transition focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10 rtl:text-right"
+                    className="w-full rounded-lg border border-line bg-card px-4 py-2.5 outline-none transition focus:border-teal focus:ring-4 focus:ring-teal/10 rtl:text-right"
                   />
                 </label>
               ))}
@@ -72,7 +74,7 @@ export function LeadSection({ lang, t }: { lang: Locale; t: Dictionary }) {
                   name="chairs"
                   type="number"
                   min={1}
-                  className="w-full rounded-xl border border-line bg-surface px-4 py-2.5 outline-none transition focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10"
+                  className="w-full rounded-lg border border-line bg-card px-4 py-2.5 outline-none transition focus:border-teal focus:ring-4 focus:ring-teal/10"
                 />
               </label>
               {/* Honeypot: hidden from people, filled by bots. */}
@@ -80,16 +82,16 @@ export function LeadSection({ lang, t }: { lang: Locale; t: Dictionary }) {
               <button
                 type="submit"
                 disabled={status === "sending"}
-                className="bg-brand-gradient mt-2 w-full rounded-xl py-3 font-semibold text-white shadow-lg shadow-brand/25 transition hover:opacity-90 disabled:opacity-60"
+                className="bg-brand-gradient mt-2 w-full rounded-lg py-3 font-semibold text-white shadow-lg shadow-teal/20 transition hover:shadow-teal/40 disabled:opacity-60"
               >
                 {status === "sending" ? l.sending : l.submit}
               </button>
-              {status === "success" && <p className="text-sm text-emerald-700">{l.success}</p>}
-              {status === "error" && <p className="text-sm text-rose-600">{l.error}</p>}
+              {status === "success" && <p className="text-sm text-emerald-600 dark:text-emerald-400">{l.success}</p>}
+              {status === "error" && <p className="text-sm text-rose-500">{l.error}</p>}
             </form>
           </div>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }

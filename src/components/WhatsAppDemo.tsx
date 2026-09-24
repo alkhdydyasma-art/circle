@@ -36,11 +36,10 @@ export function WhatsAppDemo({ t }: { t: Chat }) {
   const showToast = shown > total - 1 && shown > 0;
 
   return (
-    <div className="relative mx-auto w-full max-w-sm">
-      <div className="bg-brand-gradient absolute -inset-6 -z-10 rounded-[2.5rem] opacity-15 blur-2xl" />
+    <div className="relative w-full max-w-[19rem]">
 
-      <div className="animate-float overflow-hidden rounded-[2rem] border border-line bg-white shadow-2xl shadow-ink/10">
-        <div className="flex items-center gap-3 bg-[#075e54] px-4 py-3 text-white">
+      <div className="animate-float overflow-hidden rounded-[1.75rem] border border-line bg-bg shadow-2xl shadow-black/20">
+        <div className="flex items-center gap-3 bg-[#075e54] px-4 dark:bg-[#202c33] py-3 text-white">
           <span className="flex size-9 items-center justify-center rounded-full bg-white/15">
             <Bot className="size-5" />
           </span>
@@ -51,7 +50,7 @@ export function WhatsAppDemo({ t }: { t: Chat }) {
         </div>
 
         <div
-          className="flex h-[22rem] flex-col gap-2 overflow-hidden bg-[#efeae2] p-4"
+          className="flex h-[20rem] flex-col gap-2 overflow-hidden bg-[#efeae2] p-3 dark:bg-[#0b141a]"
           aria-live="polite"
         >
           {t.messages.slice(0, shown).map((m, i) => {
@@ -60,7 +59,9 @@ export function WhatsAppDemo({ t }: { t: Chat }) {
               <div
                 key={i}
                 className={`animate-pop max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-sm ${
-                  mine ? "self-end rounded-ee-sm bg-[#d9fdd3]" : "self-start rounded-es-sm bg-white"
+                  mine
+                    ? "self-end rounded-ee-sm bg-[#d9fdd3] text-zinc-900 dark:bg-[#005c4b] dark:text-zinc-100"
+                    : "self-start rounded-es-sm bg-white text-zinc-900 dark:bg-[#202c33] dark:text-zinc-100"
                 }`}
               >
                 {m.text}
@@ -69,7 +70,7 @@ export function WhatsAppDemo({ t }: { t: Chat }) {
             );
           })}
           {typing && (
-            <div className="animate-pop flex gap-1 self-start rounded-2xl bg-white px-3 py-3 shadow-sm">
+            <div className="animate-pop flex gap-1 self-start rounded-2xl bg-white px-3 dark:bg-[#202c33] py-3 shadow-sm">
               {[0, 150, 300].map((d) => (
                 <span
                   key={d}
@@ -83,11 +84,11 @@ export function WhatsAppDemo({ t }: { t: Chat }) {
       </div>
 
       <div
-        className={`absolute inset-x-0 -bottom-6 mx-auto w-64 transition-all duration-500 ${
+        className={`absolute inset-x-0 -bottom-7 mx-auto w-64 transition-all duration-500 ${
           showToast ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0"
         }`}
       >
-        <div className="flex items-center gap-3 rounded-2xl border border-line bg-white p-3 shadow-xl shadow-ink/10">
+        <div className="flex items-center gap-3 rounded-2xl border border-line bg-bg p-3 shadow-xl shadow-black/20">
           <span className="bg-brand-gradient flex size-9 shrink-0 items-center justify-center rounded-xl text-white">
             <CalendarCheck className="size-5" />
           </span>
