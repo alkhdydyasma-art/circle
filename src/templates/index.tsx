@@ -3,10 +3,10 @@ import type { TemplateKey } from "./theme";
 import type { TemplateProps } from "./types";
 import { ModernTemplate } from "./modern/ModernTemplate";
 
-// Template registry. "calm" and "premium" reuse Modern's layout for now and differ only by
-// palette (theme.ts) until their own layouts land.
+// Template registry. The occasion themes share Modern's layout and add their own palette
+// (theme.ts) and motifs (OccasionDecor.tsx).
 export const templates: Record<TemplateKey, ComponentType<TemplateProps>> = {
   modern: ModernTemplate,
-  calm: ModernTemplate,
-  premium: ModernTemplate,
+  founding_day: ModernTemplate,
+  national_day: ModernTemplate,
 };

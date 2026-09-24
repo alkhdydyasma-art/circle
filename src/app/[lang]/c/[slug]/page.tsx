@@ -5,7 +5,7 @@ import { getPublicSite, type PublicSite } from "@/lib/sites";
 import { templates } from "@/templates";
 import { siteFontVariables } from "@/templates/fonts";
 import { getSiteStrings } from "@/templates/strings";
-import { safeColor, safeHttpsUrl, themeStyle } from "@/templates/theme";
+import { primaryOf, safeHttpsUrl, themeStyle } from "@/templates/theme";
 
 // Public clinic websites are rebuilt at most once a minute.
 export const revalidate = 60;
@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/c/[slug]">
     title,
     description,
     openGraph: { title, description, type: "website" },
-    other: { "theme-color": safeColor(site.site.brand.primary, "#0e7490") },
+    other: { "theme-color": primaryOf(site.site.template, site.site.brand) },
   };
 }
 
@@ -84,6 +84,7 @@ export default async function ClinicSitePage({ params }: PageProps<"/[lang]/c/[s
           branches: sections.branches !== false,
         }}
         formatPrice={(v) => price.format(v)}
+        occasion={site.site.template === "modern" ? undefined : site.site.template}
       />
     </div>
   );

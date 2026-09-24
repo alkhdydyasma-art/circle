@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CalendarCheck, Clock, MapPin, MessageCircle, Phone, Sparkles, Stethoscope } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import type { TemplateProps } from "../types";
+import { OccasionRibbon, SaduBand, StarPattern } from "../OccasionDecor";
 
 // "Modern": airy white layout, brand colour for actions, soft brand-tinted panels.
 
@@ -49,6 +50,7 @@ export function ModernTemplate(p: TemplateProps) {
 
   return (
     <>
+      {p.occasion && <OccasionRibbon occasion={p.occasion} text={t.occasion[p.occasion]} />}
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-site-line bg-[color-mix(in_srgb,var(--c-bg)_85%,transparent)] backdrop-blur-lg">
         <div className="mx-auto flex h-18 max-w-6xl items-center justify-between gap-4 px-5">
@@ -77,6 +79,9 @@ export function ModernTemplate(p: TemplateProps) {
         <section className="relative overflow-hidden">
           <div aria-hidden className="absolute -end-40 -top-40 size-[34rem] rounded-full bg-site-primary opacity-[0.08] blur-3xl" />
           <div aria-hidden className="absolute -start-40 top-40 size-[28rem] rounded-full bg-site-accent opacity-[0.08] blur-3xl" />
+          {p.occasion === "national_day" && (
+            <StarPattern id="stars-hero" className="opacity-[0.07] [mask-image:linear-gradient(to_bottom,black,transparent)]" />
+          )}
           <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 pt-16 pb-20 lg:grid-cols-[1.1fr_1fr] lg:pt-24">
             <div>
               <Reveal>
@@ -288,6 +293,7 @@ export function ModernTemplate(p: TemplateProps) {
         </section>
       </main>
 
+      {p.occasion === "founding_day" && <SaduBand id="sadu-footer" />}
       {/* Footer */}
       <footer className="border-t border-site-line">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-10 text-sm text-site-muted sm:flex-row sm:items-center sm:justify-between">

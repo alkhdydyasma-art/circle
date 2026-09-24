@@ -83,8 +83,15 @@ patients, clinical notes and appointments.
 ### Clinic websites & templates (`/ar/c/{slug}`)
 
 Each clinic's public site is rendered from `public_site(slug)` by one of the templates in
-`src/templates` — `modern`, `calm`, `premium` (calm/premium currently reuse Modern's layout with
-their own palettes). The clinic's `clinic_sites.brand` drives the theme:
+`src/templates`:
+
+- `modern` — the clinic's own brand colours.
+- `founding_day` (يوم التأسيس) — sand, mud-brick brown and gold with a Sadu-inspired band.
+- `national_day` (اليوم الوطني) — deep night with Saudi green and an eight-pointed-star pattern.
+
+Occasion themes fix the colours and add a greeting ribbon; the clinic keeps its logo and font.
+They use original geometric motifs only — no flag, emblem or official occasion logos (the flag
+carries the Shahada and must not be used as commercial decoration). The brand settings:
 
 ```json
 { "primary": "#0e7490", "accent": "#14b8a6", "font": "tajawal", "logo_url": "https://…", "hero_image_url": "https://…" }

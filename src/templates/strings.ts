@@ -12,6 +12,10 @@ const ar = {
   cta: { title: "جاهز لزيارتنا؟", subtitle: "احجز موعدك في أقل من دقيقة، وسنرسل لك تأكيداً وتذكيراً قبل الموعد." },
   footer: { poweredBy: "بإدارة", rights: "جميع الحقوق محفوظة." },
   heroCard: "من خدماتنا",
+  occasion: {
+    founding_day: "يوم التأسيس ١٧٢٧م — يوم بدينا",
+    national_day: "كل عام والوطن بخير — اليوم الوطني السعودي",
+  },
 };
 
 export type SiteStrings = typeof ar;
@@ -28,6 +32,10 @@ const en: SiteStrings = {
   cta: { title: "Ready to visit?", subtitle: "Book in under a minute — we'll confirm and remind you before your visit." },
   footer: { poweredBy: "Powered by", rights: "All rights reserved." },
   heroCard: "Popular treatments",
+  occasion: {
+    founding_day: "Saudi Founding Day — since 1727",
+    national_day: "Happy Saudi National Day",
+  },
 };
 
 export const getSiteStrings = (lang: Locale) => (lang === "en" ? en : ar);

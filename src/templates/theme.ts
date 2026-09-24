@@ -1,16 +1,29 @@
 import type { CSSProperties } from "react";
 import { FONTS, type FontKey } from "./fonts";
 
-export const TEMPLATES = ["modern", "calm", "premium"] as const;
+export const TEMPLATES = ["modern", "founding_day", "national_day"] as const;
 export type TemplateKey = (typeof TEMPLATES)[number];
 
 export type Brand = { primary?: string; accent?: string; font?: string; logo_url?: string; hero_image_url?: string };
 
-// Base palettes per template; the clinic's brand colours are layered on top.
-const PALETTES: Record<TemplateKey, Record<"bg" | "surface" | "ink" | "muted" | "line", string>> = {
+type Palette = Record<"bg" | "surface" | "ink" | "muted" | "line", string> & {
+  /** Occasion themes fix the brand colours; the clinic keeps its logo and font. */
+  primary?: string;
+  accent?: string;
+};
+
+const PALETTES: Record<TemplateKey, Palette> = {
   modern: { bg: "#ffffff", surface: "#f5f7fa", ink: "#0f172a", muted: "#5b6474", line: "#e6e9ef" },
-  calm: { bg: "#fbf8f4", surface: "#f3eee7", ink: "#2b2724", muted: "#6f665e", line: "#e8e0d6" },
-  premium: { bg: "#0d1117", surface: "#151b23", ink: "#f0f3f6", muted: "#9aa4b2", line: "#262d36" },
+  // يوم التأسيس: Najdi earth — sand, mud-brick brown, desert gold.
+  founding_day: {
+    bg: "#faf4ea", surface: "#f1e6d3", ink: "#3a2718", muted: "#7a6552", line: "#e3d2b8",
+    primary: "#7b4a26", accent: "#b8893b",
+  },
+  // اليوم الوطني: deep night with Saudi green.
+  national_day: {
+    bg: "#06110b", surface: "#0c1c13", ink: "#eef5f0", muted: "#9db3a5", line: "#1b3325",
+    primary: "#169b52", accent: "#6fd69a",
+  },
 };
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -39,10 +52,13 @@ function readableOn(bg: string) {
 export const safeHttpsUrl = (value: unknown) =>
   typeof value === "string" && /^https:\/\/[^\s"'<>]+$/.test(value) ? value : undefined;
 
+export const primaryOf = (template: TemplateKey, brand: Brand) =>
+  PALETTES[template].primary ?? safeColor(brand.primary, "#0e7490");
+
 export function themeStyle(template: TemplateKey, brand: Brand): CSSProperties {
   const p = PALETTES[template];
-  const primary = safeColor(brand.primary, "#0e7490");
-  const accent = safeColor(brand.accent, "#14b8a6");
+  const primary = primaryOf(template, brand);
+  const accent = p.accent ?? safeColor(brand.accent, "#14b8a6");
   const font = FONTS[(brand.font as FontKey) in FONTS ? (brand.font as FontKey) : "plex"];
   return {
     "--c-bg": p.bg,
