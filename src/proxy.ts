@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { harden, SESSION_COOKIE, supabaseEnv } from "@/lib/supabase/cookies";
 
-// Guards /{lang}/portal/*: refreshes the Supabase session (rewriting the HttpOnly
+// Guards /{lang}/portal/* and /{lang}/preview/*: refreshes the Supabase session (rewriting the HttpOnly
 // cookies) and sends signed-out visitors to the login page.
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -34,5 +34,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/(ar|en)/portal/:path*"],
+  matcher: ["/(ar|en)/portal/:path*", "/(ar|en)/preview/:path*"],
 };

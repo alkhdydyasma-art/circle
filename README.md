@@ -113,6 +113,22 @@ availability in one call (`GET /api/sites/{slug}/availability`) so empty days ar
 and notifies `N8N_BOOKING_WEBHOOK_URL` if set. If someone else takes the slot first, the patient is
 told and sent back to a refreshed list of times. The confirmation offers an `.ics` calendar file.
 
+### Clinic dashboard (`/ar/portal/clinic/{id}`)
+
+| Page | Owner / manager | Reception | Doctor |
+| --- | --- | --- | --- |
+| Today — KPIs, today's list, pending requests | ✓ | ✓ | own appointments |
+| Appointments — week view, doctor filter, manual booking | ✓ | ✓ | own (status only) |
+| Patients — search, details, visit history | ✓ | ✓ | patients they treat |
+| Medical record (allergies, history) | ✓ | — | patients they treat |
+| Services · Doctors & hours · Branches | ✓ | — | — |
+| Website & brand — template, colours, font, content, booking rules, publish, draft preview | ✓ | — | — |
+| Team & settings — members, invitations, activity log | ✓ | — | — |
+
+Every page and action runs as the signed-in user, so these limits are enforced by the RLS policies
+(the menu only hides what the database would refuse anyway). Double-booking from the dashboard is
+blocked by the same exclusion constraint as online booking. Draft previews live at `/ar/preview/{id}`.
+
 ### Tests
 
 `supabase/tests/run.sh` loads the migrations into a throwaway Postgres (with a stub of Supabase's

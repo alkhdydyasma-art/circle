@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
       { source: "/:path*", headers: securityHeaders },
       // Portal and invite pages carry personal data: never cache, never index.
       {
-        source: "/:lang(ar|en)/:section(portal|invite|login)/:path*",
+        source: "/:lang(ar|en)/:section(portal|invite|login|preview)/:path*",
         headers: [
           { key: "Cache-Control", value: "private, no-store" },
           { key: "X-Robots-Tag", value: "noindex, nofollow" },
