@@ -33,6 +33,12 @@ export function SiteHeader({ lang, t }: { lang: Locale; t: Dictionary }) {
           >
             {t.nav.switchLang}
           </Link>
+          <Link
+            href={`/${lang}/login`}
+            className="hidden rounded-full px-3 py-1.5 text-sm text-muted transition hover:text-ink md:inline-block"
+          >
+            {t.nav.login}
+          </Link>
           <ThemeToggle label={t.nav.theme} />
           <a
             href="#demo"

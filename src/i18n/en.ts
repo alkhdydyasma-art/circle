@@ -12,6 +12,7 @@ const en: Dictionary = {
     dashboard: "Dashboard",
     pricing: "Pricing",
     faq: "FAQ",
+    login: "Clinic login",
     cta: "Book a demo",
     switchLang: "العربية",
     theme: "Toggle dark mode",

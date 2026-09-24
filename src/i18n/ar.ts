@@ -10,6 +10,7 @@ const ar = {
     dashboard: "لوحة التحكم",
     pricing: "الباقات",
     faq: "الأسئلة الشائعة",
+    login: "دخول العيادات",
     cta: "اطلب عرضاً تجريبياً",
     switchLang: "English",
     theme: "تبديل الوضع الليلي",
