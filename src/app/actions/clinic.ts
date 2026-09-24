@@ -6,6 +6,7 @@ import { hasLocale, type Locale } from "@/i18n";
 import { normalizeSaudiMobile, SAUDI_MOBILE } from "@/lib/lead-schema";
 import { createClient } from "@/lib/supabase/server";
 import { zonedToUtc } from "@/lib/time";
+import { hashToken, newToken } from "@/lib/tokens";
 import { TEMPLATES } from "@/templates/theme";
 import { FONTS } from "@/templates/fonts";
 
@@ -13,7 +14,7 @@ import { FONTS } from "@/templates/fonts";
 // allowed (a doctor can't edit services, reception can't read clinical notes, nobody can touch
 // another clinic). Validation here only produces friendly errors.
 
-export type FormState = { ok?: boolean; error?: "invalid" | "denied" | "overlap" | "slug_taken" | "error" };
+export type FormState = { ok?: boolean; error?: "invalid" | "denied" | "overlap" | "slug_taken" | "error"; secret?: string };
 
 const uuid = z.string().uuid();
 const lang = (fd: FormData): Locale => {
@@ -314,5 +315,52 @@ export async function setPublished(fd: FormData) {
   const supabase = await createClient();
   const { data } = await supabase.from("clinic_sites").update({ published: p.data.published === "true" }).eq("clinic_id", p.data.clinicId).select("slug").single();
   if (data) for (const l of ["ar", "en"]) revalidatePath(`/${l}/c/${data.slug}`);
+  refresh(fd, p.data.clinicId);
+}
+
+// ─── Automation ──────────────────────────────────────────────────────────────
+export async function saveAutomation(_: FormState, fd: FormData): Promise<FormState> {
+  const p = z.object({
+    clinicId: uuid,
+    reminders_enabled: z.boolean(),
+    reminder_hours_before: z.coerce.number().int().min(1).max(72),
+    reschedule_cutoff_hours: z.coerce.number().int().min(0).max(168),
+    auto_occasions: z.boolean(),
+  }).safeParse({
+    clinicId: fd.get("clinicId"), reminders_enabled: fd.get("reminders_enabled") === "on",
+    reminder_hours_before: fd.get("reminder_hours_before"), reschedule_cutoff_hours: fd.get("reschedule_cutoff_hours"),
+    auto_occasions: fd.get("auto_occasions") === "on",
+  });
+  if (!p.success) return { error: "invalid" };
+  const { clinicId, ...fields } = p.data;
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("clinic_sites").update(fields).eq("clinic_id", clinicId).select("slug").single();
+  if (error) return fail(error);
+  for (const l of ["ar", "en"]) revalidatePath(`/${l}/c/${data.slug}`);
+  refresh(fd, clinicId);
+  return { ok: true };
+}
+
+// The raw key is returned once; only its SHA-256 is stored.
+export async function createApiKey(_: FormState, fd: FormData): Promise<FormState> {
+  const p = z.object({ clinicId: uuid, name: z.string().trim().min(1).max(60) }).safeParse({ clinicId: fd.get("clinicId"), name: fd.get("name") });
+  if (!p.success) return { error: "invalid" };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "denied" };
+  const key = `ck_${newToken()}`;
+  const { error } = await supabase.from("clinic_api_keys").insert({
+    clinic_id: p.data.clinicId, name: p.data.name, prefix: key.slice(0, 8), key_hash: hashToken(key), created_by: user.id,
+  });
+  if (error) return fail(error);
+  refresh(fd, p.data.clinicId);
+  return { ok: true, secret: key };
+}
+
+export async function revokeApiKey(fd: FormData) {
+  const p = z.object({ id: uuid, clinicId: uuid }).safeParse({ id: fd.get("id"), clinicId: fd.get("clinicId") });
+  if (!p.success) return;
+  const supabase = await createClient();
+  await supabase.from("clinic_api_keys").update({ revoked_at: new Date().toISOString() }).eq("id", p.data.id).is("revoked_at", null);
   refresh(fd, p.data.clinicId);
 }

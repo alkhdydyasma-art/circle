@@ -14,7 +14,7 @@ export default async function ClinicLayout({ children, params }: LayoutProps<"/[
   const base = `/${lang}/portal/clinic/${id}`;
 
   // Menu mirrors what RLS allows each role to do.
-  const keys: NavKey[] = ["today", "appointments", "patients", ...(ctx.canManage ? (["services", "doctors", "website", "team"] as const) : [])];
+  const keys: NavKey[] = ["today", "appointments", "patients", ...(ctx.canManage ? (["services", "doctors", "website", "automation", "team"] as const) : [])];
   const items = keys.map((key) => ({ key, label: t.dash.nav[key], href: key === "today" ? base : `${base}/${key}` }));
 
   return (

@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { bookAppointment, notifyBooking } from "@/lib/booking";
+import { bookAppointment, formatWhen, notifyBooking } from "@/lib/booking";
 import { getPublicSite } from "@/lib/sites";
 import { normalizeSaudiMobile } from "@/lib/lead-schema";
+import { withManageUrl } from "@/lib/clinic-api";
 
 const body = z.object({
   serviceId: z.string().uuid(),
@@ -29,12 +30,13 @@ export async function POST(request: Request, { params }: RouteContext<"/api/site
   if (!result.ok) return Response.json({ error: result.error }, { status: STATUS[result.error] });
 
   const site = await getPublicSite(slug);
+  const booking = withManageUrl(request, result.booking);
   await notifyBooking({
     event: "appointment.booked",
     source: "website",
     clinic: { id: site?.clinic.id, name: site?.clinic.name, slug },
-    appointment: result.booking,
+    appointment: { ...booking, when: formatWhen(booking.starts_at, site?.site.timezone) },
     patient: { name: input.fullName, phone: normalizeSaudiMobile(input.phone) },
   });
-  return Response.json({ booking: result.booking }, { status: 201 });
+  return Response.json({ booking }, { status: 201 });
 }

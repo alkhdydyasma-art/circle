@@ -25,6 +25,7 @@ const siteSchema = z.object({
     email: z.string().nullable(),
     timezone: z.string(),
     booking_days_ahead: z.number(),
+    reminders_enabled: z.boolean().optional().catch(false),
   }),
   branches: z.array(z.object({
     id: z.string().uuid(), name: z.string(), city: z.string().nullable(), address: z.string().nullable(),

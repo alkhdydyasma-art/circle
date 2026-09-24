@@ -9,7 +9,7 @@ type Service = { id: string; name: string; description: string | null; duration_
 type Doctor = { id: string; full_name: string; title: string | null; specialty: string | null; service_ids: string[] };
 type Branch = { id: string; name: string };
 type Slot = { doctor_id: string; branch_id: string; starts_at: string };
-type Booked = { id: string; starts_at: string; service: string; doctor: string; branch: string };
+type Booked = { id: string; starts_at: string; service: string; doctor: string; branch: string; manage_url?: string };
 
 type Props = {
   slug: string;
@@ -22,6 +22,7 @@ type Props = {
   branches: Branch[];
   initialServiceId?: string;
   whatsappHref?: string;
+  remindersEnabled?: boolean;
 };
 
 const card = "rounded-2xl border border-site-line bg-site-bg p-4 text-start transition hover:border-site-primary";
@@ -133,7 +134,7 @@ export function BookingWizard(p: Props) {
           <Check className="size-8" />
         </span>
         <h2 className="mt-5 text-2xl font-bold">{t.done}</h2>
-        <p className="mt-2 text-site-muted">{t.doneHint}</p>
+        <p className="mt-2 text-site-muted">{p.remindersEnabled ? t.doneHintReminders : t.doneHint}</p>
         <dl className="mt-6 space-y-2 rounded-2xl bg-site-surface p-5 text-start text-sm">
           <div className="flex justify-between gap-4"><dt className="text-site-muted">{t.steps[0]}</dt><dd className="font-semibold">{booked.service}</dd></div>
           <div className="flex justify-between gap-4"><dt className="text-site-muted">{t.steps[2]}</dt><dd className="font-semibold">{fmtFull.format(new Date(booked.starts_at))}</dd></div>
@@ -145,6 +146,9 @@ export function BookingWizard(p: Props) {
             <CalendarPlus className="size-5" />
             {t.addToCalendar}
           </a>
+          {booked.manage_url && (
+            <a href={booked.manage_url} className="rounded-full border border-site-line px-6 py-3 font-semibold">{t.manage}</a>
+          )}
           <button type="button" onClick={() => { setBooked(null); setStep(0); setServiceId(null); setSlot(null); }} className="rounded-full border border-site-line px-6 py-3 font-semibold">
             {t.another}
           </button>

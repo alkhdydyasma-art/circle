@@ -43,7 +43,7 @@ export async function getAvailability(opts: {
 export const BOOKING_ERRORS = ["slot_unavailable", "too_many_bookings", "invalid_phone", "invalid_name", "clinic_not_found"] as const;
 export type BookingError = (typeof BOOKING_ERRORS)[number] | "error";
 
-export type Booked = { id: string; starts_at: string; service: string; doctor: string; branch: string };
+export type Booked = { id: string; starts_at: string; service: string; doctor: string; branch: string; manage_token?: string };
 
 export async function bookAppointment(input: {
   slug: string; serviceId: string; doctorId: string; branchId: string; startsAt: string;
@@ -66,6 +66,11 @@ export async function bookAppointment(input: {
   }
   return { ok: true, booking: data as Booked };
 }
+
+/** "السبت، 26 سبتمبر في 10:00 ص" — for WhatsApp template parameters. */
+export const formatWhen = (iso: string, timeZone = "Asia/Riyadh") =>
+  new Intl.DateTimeFormat("ar-SA-u-nu-latn-ca-gregory", { timeZone, weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit" })
+    .format(new Date(iso));
 
 // Optional: tell n8n about the booking so it can send the WhatsApp confirmation.
 export async function notifyBooking(payload: Record<string, unknown>) {

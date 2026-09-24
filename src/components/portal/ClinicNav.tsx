@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Globe, LayoutDashboard, Settings, Sparkles, Stethoscope, Users } from "lucide-react";
+import { CalendarDays, Globe, LayoutDashboard, Settings, Sparkles, Stethoscope, Users, Zap } from "lucide-react";
 
-const ICONS = { today: LayoutDashboard, appointments: CalendarDays, patients: Users, services: Sparkles, doctors: Stethoscope, website: Globe, team: Settings };
+const ICONS = { today: LayoutDashboard, appointments: CalendarDays, patients: Users, services: Sparkles, doctors: Stethoscope, website: Globe, automation: Zap, team: Settings };
 export type NavKey = keyof typeof ICONS;
 
 export function ClinicNav({ base, items }: { base: string; items: { key: NavKey; label: string; href: string }[] }) {

@@ -9,7 +9,7 @@ type Messages = { saved: string; invalid: string; denied: string; overlap?: stri
 // `version` should change when the saved data changes: the fields remount with the fresh
 // values while the form (and its status message) stays mounted.
 export function ActionForm({
-  action, hidden, messages, submitLabel, children, className = "space-y-3", version,
+  action, hidden, messages, submitLabel, children, className = "space-y-3", version, secretLabel,
 }: {
   action: (state: FormState, fd: FormData) => Promise<FormState>;
   hidden: Record<string, string>;
@@ -18,6 +18,8 @@ export function ActionForm({
   children: ReactNode;
   className?: string;
   version?: string;
+  /** Shown above a one-time secret returned by the action (e.g. a new API key). */
+  secretLabel?: string;
 }) {
   const [state, run, pending] = useActionState(action, {});
   const msg = state.ok
@@ -37,6 +39,12 @@ export function ActionForm({
         </button>
         {msg && <span role="status" className={`text-sm ${state.ok ? "text-teal" : "text-rose-500"}`}>{msg}</span>}
       </div>
+      {state.secret && (
+        <div className="rounded-lg border border-amber-400/50 bg-amber-400/10 p-3 text-sm">
+          <p className="text-muted">{secretLabel}</p>
+          <code dir="ltr" className="mt-2 block break-all rounded bg-bg p-2 font-mono text-xs select-all">{state.secret}</code>
+        </div>
+      )}
     </form>
   );
 }

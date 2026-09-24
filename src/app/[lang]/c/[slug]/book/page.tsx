@@ -49,6 +49,7 @@ export default async function BookPage({ params, searchParams }: PageProps<"/[la
           branches={site.branches}
           initialServiceId={typeof service === "string" ? service : undefined}
           whatsappHref={site.site.whatsapp ? `https://wa.me/${site.site.whatsapp.slice(1)}` : undefined}
+          remindersEnabled={site.site.reminders_enabled ?? false}
         />
       </main>
     </div>

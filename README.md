@@ -15,7 +15,7 @@ Bilingual (Arabic RTL / English LTR) marketing site for Circle — AI automation
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_ANON_KEY` | Supabase anon key (used server-side only; the browser never talks to Supabase) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only key: inserts leads and creates accounts for accepted invitations. Never expose it |
-| `N8N_BOOKING_WEBHOOK_URL` | Optional n8n webhook called after each online booking (event `appointment.booked`) — use it to send the WhatsApp confirmation |
+| `N8N_BOOKING_WEBHOOK_URL` | Optional n8n webhook called after each booking (website or API, event `appointment.booked`, includes `when` and `manage_url`) — see `n8n/` |
 | `SITE_URL` | Public site URL used in invitation links, e.g. `https://circle.sa` |
 | `N8N_LEAD_WEBHOOK_URL` | Optional n8n webhook notified of each new lead |
 | `N8N_WEBHOOK_SECRET` | Optional, sent as `x-circle-secret` header |
@@ -129,10 +129,24 @@ Every page and action runs as the signed-in user, so these limits are enforced b
 (the menu only hides what the database would refuse anyway). Double-booking from the dashboard is
 blocked by the same exclusion constraint as online booking. Draft previews live at `/ar/preview/{id}`.
 
+### Automation (`/ar/portal/clinic/{id}/automation`)
+
+- **Clinic API keys** (`ck_…`): shown once, stored as SHA-256, revocable. A key only reaches its
+  own clinic — every `/api/v1/*` route calls an `api_*` SQL function that resolves the clinic from
+  the key hash. Endpoints: `clinic`, `slots`, `appointments` (book / find by phone),
+  `appointments/{id}/reschedule|cancel` (phone must match), `reminders`, `reminders/{id}/sent`.
+- **Reminders**: per-clinic on/off and lead time; `GET /api/v1/reminders` returns due visits with a
+  fresh self-service link, a formatted `when`, and a ready message; they are never returned twice.
+- **Patient self-service link** `/ar/a/{token}`: confirm attendance, cancel, or pick a new time,
+  until the clinic's cutoff. Tokens are 256-bit, stored hashed, and replaced on each reminder.
+- **Automatic occasions**: optional; switches the site to Founding Day (Feb 20–25) and National Day
+  (Sep 20–26) themes.
+- **n8n**: importable workflows and WhatsApp template texts in `n8n/`.
+
 ### Tests
 
 `supabase/tests/run.sh` loads the migrations into a throwaway Postgres (with a stub of Supabase's
-`auth` schema) and runs every `*_test.sql` — 96 tenant-isolation, permission and booking checks:
+`auth` schema) and runs every `*_test.sql` — 138 tenant-isolation, permission, booking and automation checks:
 
 ```bash
 PGHOST=localhost PGUSER=postgres supabase/tests/run.sh
