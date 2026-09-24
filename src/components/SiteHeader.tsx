@@ -9,6 +9,7 @@ export function SiteHeader({ lang, t }: { lang: Locale; t: Dictionary }) {
     { href: "#features", label: t.nav.features },
     { href: "#how", label: t.nav.how },
     { href: "#dashboard", label: t.nav.dashboard },
+    { href: "#faq", label: t.nav.faq },
   ];
 
   return (
