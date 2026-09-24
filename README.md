@@ -80,6 +80,23 @@ patients, clinical notes and appointments.
   3 open website bookings per phone. A Postgres exclusion constraint makes double-booking a doctor
   impossible, even under concurrent requests.
 
+### Clinic websites & templates (`/ar/c/{slug}`)
+
+Each clinic's public site is rendered from `public_site(slug)` by one of the templates in
+`src/templates` — `modern`, `calm`, `premium` (calm/premium currently reuse Modern's layout with
+their own palettes). The clinic's `clinic_sites.brand` drives the theme:
+
+```json
+{ "primary": "#0e7490", "accent": "#14b8a6", "font": "tajawal", "logo_url": "https://…", "hero_image_url": "https://…" }
+```
+
+Fonts: `plex`, `tajawal`, `cairo`, `readex`. Colours are validated, button text colour is chosen by
+WCAG contrast, and `content.sections` can hide services / doctors / branches. Pages include
+schema.org `Dentist` data for search engines and are regenerated at most once a minute.
+
+**Demo clinic:** run `supabase/seed/demo_clinic.sql` to get a published sample at `/ar/c/noor`
+(no real patient data) — useful for sales demos.
+
 ### Tests
 
 `supabase/tests/run.sh` loads the migrations into a throwaway Postgres (with a stub of Supabase's

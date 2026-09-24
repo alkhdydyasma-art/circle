@@ -122,3 +122,31 @@ h1, h2, h3 {
   }
   .reveal { opacity: 1; transform: none; }
 }
+
+/* Clinic sites: colours come from each clinic's brand (see src/templates/theme.ts). */
+@theme inline {
+  --color-site-bg: var(--c-bg);
+  --color-site-surface: var(--c-surface);
+  --color-site-ink: var(--c-ink);
+  --color-site-muted: var(--c-muted);
+  --color-site-line: var(--c-line);
+  --color-site-primary: var(--c-primary);
+  --color-site-primary-fg: var(--c-primary-fg);
+  --color-site-accent: var(--c-accent);
+}
+
+.clinic-site {
+  font-family: var(--c-font);
+  background: var(--c-bg);
+  color: var(--c-ink);
+}
+.clinic-site h1, .clinic-site h2, .clinic-site h3 {
+  font-family: var(--c-font);
+}
+body:has(.clinic-site)::before {
+  display: none; /* Circle's film grain is part of Circle's brand, not the clinic's */
+}
+html:has(.clinic-site),
+body:has(.clinic-site) {
+  background: transparent; /* the clinic wrapper paints its own background */
+}
