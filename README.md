@@ -62,10 +62,28 @@ Then in Supabase:
   bound to the invited email.
 - **Headers**: HSTS, `X-Frame-Options: DENY`, `nosniff`, strict referrer and permissions policies.
 
+### Clinic data & public booking
+
+`20260926000000_clinic_data.sql` adds each clinic's public site settings (`clinic_sites`: slug,
+template, brand, booking rules), branches, doctors, services, weekly working hours, time off,
+patients, clinical notes and appointments.
+
+- **Composite keys** `(clinic_id, id)` on every reference: a row can never point at another
+  clinic's doctor, service or patient.
+- **Roles**: owner/manager configure the clinic; reception manages patients and appointments;
+  doctors see only their own appointments and patients and may change only status/notes.
+  Clinical notes (`patient_clinical`) are readable by owners, managers and the treating doctor —
+  never reception.
+- **Visitors never touch tables.** A published site of an active clinic is served through
+  `public_site(slug)`, `available_slots(slug, service, day, doctor?, branch?)` and
+  `book_appointment(...)`, which re-checks the slot, reuses the patient by phone and allows at most
+  3 open website bookings per phone. A Postgres exclusion constraint makes double-booking a doctor
+  impossible, even under concurrent requests.
+
 ### Tests
 
 `supabase/tests/run.sh` loads the migrations into a throwaway Postgres (with a stub of Supabase's
-`auth` schema) and runs 44 tenant-isolation and permission checks:
+`auth` schema) and runs every `*_test.sql` — 96 tenant-isolation, permission and booking checks:
 
 ```bash
 PGHOST=localhost PGUSER=postgres supabase/tests/run.sh

@@ -1,6 +1,7 @@
 -- Local-only stand-in for the pieces of Supabase's auth schema the migrations use.
 -- Never run this against a real Supabase project.
 create schema if not exists auth;
+create schema if not exists extensions; -- where Supabase installs extensions
 create table if not exists auth.users (id uuid primary key, email text not null);
 
 create or replace function auth.jwt() returns jsonb language sql stable as $$
