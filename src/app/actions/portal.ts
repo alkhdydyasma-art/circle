@@ -7,11 +7,12 @@ import { z } from "zod";
 import { hasLocale, type Locale } from "@/i18n";
 import { createClient, createServiceClient, getUser } from "@/lib/supabase/server";
 import { hashToken, newToken } from "@/lib/tokens";
+import { allowAction } from "@/lib/rate-limit";
 
 // Every action runs as the signed-in user, so Postgres RLS is the final authority on
 // what they may read or change. Inputs are still validated here for clean errors.
 
-export type ActionState = { ok?: boolean; error?: "denied" | "invalid" | "error" | "exists" | "wrong_account"; link?: string };
+export type ActionState = { ok?: boolean; error?: "denied" | "invalid" | "error" | "exists" | "wrong_account" | "rate_limited" | "mismatch" | "expired"; link?: string };
 
 const roleEnum = z.enum(["owner", "manager", "doctor", "reception"]);
 const uuid = z.string().uuid();
@@ -38,6 +39,7 @@ export async function signIn(_: ActionState, fd: FormData): Promise<ActionState>
     .object({ email: z.string().trim().toLowerCase().email(), password: z.string().min(1).max(200) })
     .safeParse({ email: fd.get("email"), password: fd.get("password") });
   if (!parsed.success) return { error: "invalid" };
+  if (!(await allowAction("signIn"))) return { error: "rate_limited" };
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
@@ -46,6 +48,32 @@ export async function signIn(_: ActionState, fd: FormData): Promise<ActionState>
   // Only allow redirects back into this site's portal (no open redirect).
   const next = String(fd.get("next") ?? "");
   redirect(next.startsWith(`/${lang}/portal`) || next.startsWith(`/${lang}/invite/`) ? next : `/${lang}/portal`);
+}
+
+// Always answers the same way whether or not the email exists (no account enumeration).
+export async function requestPasswordReset(_: ActionState, fd: FormData): Promise<ActionState> {
+  const lang = langOf(fd);
+  const email = z.string().trim().toLowerCase().email().safeParse(fd.get("email"));
+  if (!email.success) return { error: "invalid" };
+  if (!(await allowAction("reset"))) return { error: "rate_limited" };
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
+    redirectTo: `${await siteOrigin()}/auth/callback?next=/${lang}/reset-password`,
+  });
+  if (error) console.error("[auth] reset email failed", error.message);
+  return { ok: true };
+}
+
+export async function updatePassword(_: ActionState, fd: FormData): Promise<ActionState> {
+  const password = String(fd.get("password") ?? "");
+  if (password.length < 8 || password.length > 200) return { error: "invalid" };
+  if (password !== String(fd.get("confirm") ?? "")) return { error: "mismatch" };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "expired" };
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { error: "error" };
+  redirect(`/${langOf(fd)}/portal`);
 }
 
 export async function signOut(fd: FormData) {
@@ -59,6 +87,7 @@ export async function acceptInvite(_: ActionState, fd: FormData): Promise<Action
   const lang = langOf(fd);
   const token = String(fd.get("token") ?? "");
   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return { error: "invalid" };
+  if (!(await allowAction("invite"))) return { error: "rate_limited" };
   const tokenHash = hashToken(token);
 
   const supabase = await createClient();
@@ -190,9 +219,8 @@ export async function activateLead(_: ActionState, fd: FormData): Promise<Action
     .object({
       leadId: uuid,
       ownerEmail: z.string().trim().toLowerCase().email().max(160),
-      platform: z.enum(["smart_clinic", "medent"]),
     })
-    .safeParse({ leadId: fd.get("leadId"), ownerEmail: fd.get("ownerEmail"), platform: fd.get("platform") });
+    .safeParse({ leadId: fd.get("leadId"), ownerEmail: fd.get("ownerEmail") });
   if (!parsed.success) return { error: "invalid" };
 
   const token = newToken();
@@ -200,7 +228,6 @@ export async function activateLead(_: ActionState, fd: FormData): Promise<Action
   const { error } = await supabase.rpc("activate_lead", {
     p_lead: parsed.data.leadId,
     p_owner_email: parsed.data.ownerEmail,
-    p_platform: parsed.data.platform,
     p_token_hash: hashToken(token),
   });
   if (error) return fail(error);
@@ -215,13 +242,11 @@ export async function updateClinicAdmin(fd: FormData) {
       id: uuid,
       status: z.enum(["pending", "active", "suspended"]),
       plan: z.enum(["starter", "standard", "pro"]),
-      platformUrl: z.union([z.literal(""), z.string().trim().url().startsWith("https://").max(300)]),
     })
     .safeParse({
       id: fd.get("id"),
       status: fd.get("status"),
       plan: fd.get("plan"),
-      platformUrl: fd.get("platformUrl") ?? "",
     });
   if (!parsed.success) return;
   const supabase = await createClient();
@@ -230,7 +255,6 @@ export async function updateClinicAdmin(fd: FormData) {
     .update({
       status: parsed.data.status,
       plan: parsed.data.plan,
-      platform_url: parsed.data.platformUrl || null,
     })
     .eq("id", parsed.data.id);
   revalidatePath(`/${langOf(fd)}/portal`, "layout");

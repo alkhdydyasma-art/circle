@@ -6,10 +6,10 @@ import { ThemeToggle } from "./ThemeToggle";
 export function SiteHeader({ lang, t }: { lang: Locale; t: Dictionary }) {
   const other = lang === "ar" ? "en" : "ar";
   const links = [
-    { href: "#features", label: t.nav.features },
-    { href: "#how", label: t.nav.how },
-    { href: "#dashboard", label: t.nav.dashboard },
-    { href: "#faq", label: t.nav.faq },
+    { href: `/${lang}#features`, label: t.nav.features },
+    { href: `/${lang}#how`, label: t.nav.how },
+    { href: `/${lang}#dashboard`, label: t.nav.dashboard },
+    { href: `/${lang}#faq`, label: t.nav.faq },
   ];
 
   return (
@@ -41,7 +41,7 @@ export function SiteHeader({ lang, t }: { lang: Locale; t: Dictionary }) {
           </Link>
           <ThemeToggle label={t.nav.theme} />
           <a
-            href="#demo"
+            href={`/${lang}#demo`}
             className="hidden rounded-full bg-ink px-4 py-2 text-sm font-semibold text-bg transition hover:opacity-85 sm:inline-block"
           >
             {t.nav.cta}

@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import type { ActionState } from "@/app/actions/portal";
-import { activateLead, acceptInvite, inviteMember, signIn, updateClinic } from "@/app/actions/portal";
+import { activateLead, acceptInvite, inviteMember, requestPasswordReset, signIn, updateClinic, updatePassword } from "@/app/actions/portal";
 import type { PortalDictionary } from "@/i18n/portal";
 import type { Locale } from "@/i18n";
 import { btnCls, inputCls, fieldCls } from "./ui";
@@ -18,6 +18,9 @@ function ErrorLine({ state, t }: { state: ActionState; t: PortalDictionary }) {
     error: t.clinic.error,
     exists: t.invite.exists,
     wrong_account: t.invite.wrongAccount,
+    rate_limited: t.rateLimited,
+    mismatch: t.reset.mismatch,
+    expired: t.reset.expired,
   }[state.error];
   return <p role="alert" className="text-sm text-rose-500">{msg}</p>;
 }
@@ -123,12 +126,43 @@ export function ActivateLeadForm({ lang, t, leadId, activated }: P & { leadId: s
       <input type="hidden" name="lang" value={lang} />
       <input type="hidden" name="leadId" value={leadId} />
       <input required name="ownerEmail" type="email" dir="ltr" placeholder={t.admin.ownerEmail} aria-label={t.admin.ownerEmail} className={`${fieldCls} w-56 rtl:text-right`} />
-      <select name="platform" aria-label={t.admin.cols.platform} className={fieldCls}>
-        <option value="smart_clinic">{t.platforms.smart_clinic}</option>
-        <option value="medent">{t.platforms.medent}</option>
-      </select>
       <button disabled={pending} className={btnCls}>{t.admin.activate}</button>
       <ErrorLine state={state} t={t} />
+    </form>
+  );
+}
+
+export function ForgotForm({ lang, t }: P) {
+  const [state, action, pending] = useActionState(requestPasswordReset, {});
+  if (state.ok) return <p role="status" className="rounded-lg bg-teal/10 p-3 text-sm text-teal">{t.reset.sent}</p>;
+  return (
+    <form action={action} className="space-y-4">
+      <input type="hidden" name="lang" value={lang} />
+      <label className="block text-sm">
+        <span className="mb-1 block text-muted">{t.login.email}</span>
+        <input required name="email" type="email" dir="ltr" autoComplete="email" className={`${inputCls} rtl:text-right`} />
+      </label>
+      <ErrorLine state={state} t={t} />
+      <button disabled={pending} className={`${btnCls} w-full py-2.5`}>{t.reset.send}</button>
+    </form>
+  );
+}
+
+export function NewPasswordForm({ lang, t }: P) {
+  const [state, action, pending] = useActionState(updatePassword, {});
+  return (
+    <form action={action} className="space-y-4">
+      <input type="hidden" name="lang" value={lang} />
+      <label className="block text-sm">
+        <span className="mb-1 block text-muted">{t.reset.newPassword}</span>
+        <input required minLength={8} maxLength={200} name="password" type="password" dir="ltr" autoComplete="new-password" className={inputCls} />
+      </label>
+      <label className="block text-sm">
+        <span className="mb-1 block text-muted">{t.reset.confirm}</span>
+        <input required minLength={8} maxLength={200} name="confirm" type="password" dir="ltr" autoComplete="new-password" className={inputCls} />
+      </label>
+      <ErrorLine state={state} t={t} />
+      <button disabled={pending} className={`${btnCls} w-full py-2.5`}>{t.reset.save}</button>
     </form>
   );
 }

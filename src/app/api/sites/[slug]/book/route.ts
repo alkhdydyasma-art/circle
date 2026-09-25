@@ -3,6 +3,7 @@ import { bookAppointment, formatWhen, notifyBooking } from "@/lib/booking";
 import { getPublicSite } from "@/lib/sites";
 import { normalizeSaudiMobile } from "@/lib/lead-schema";
 import { withManageUrl } from "@/lib/clinic-api";
+import { allowRequest, tooMany } from "@/lib/rate-limit";
 
 const body = z.object({
   serviceId: z.string().uuid(),
@@ -20,6 +21,7 @@ const STATUS = { slot_unavailable: 409, too_many_bookings: 429, invalid_phone: 4
 
 // POST /api/sites/{slug}/book — the database re-validates the slot and prevents double-booking.
 export async function POST(request: Request, { params }: RouteContext<"/api/sites/[slug]/book">) {
+  if (!(await allowRequest("book", request))) return tooMany();
   const { slug } = await params;
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "invalid_request" }, { status: 400 });

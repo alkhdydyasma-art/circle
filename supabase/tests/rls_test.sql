@@ -68,11 +68,11 @@ insert into public.leads (id, clinic, city, clinic_type, branches, chairs, docto
 -- ─── Activation by Circle staff ─────────────────────────────────────────────
 select pg_temp.act_as('stranger@evil.sa');
 select pg_temp.expect_fail('non-admin cannot activate a lead',
-  $$select public.activate_lead('10000000-0000-0000-0000-000000000001', 'x@x.sa', 'smart_clinic', 'hx')$$);
+  $$select public.activate_lead('10000000-0000-0000-0000-000000000001', 'x@x.sa', 'hx')$$);
 
 select pg_temp.act_as('admin@circle.sa');
-select public.activate_lead('10000000-0000-0000-0000-000000000001', 'Owner1@Noor.sa', 'smart_clinic', 'h-owner1') is not null;
-select public.activate_lead('10000000-0000-0000-0000-000000000002', 'owner2@smile.sa', 'medent', 'h-owner2') is not null;
+select public.activate_lead('10000000-0000-0000-0000-000000000001', 'Owner1@Noor.sa', 'h-owner1') is not null;
+select public.activate_lead('10000000-0000-0000-0000-000000000002', 'owner2@smile.sa', 'h-owner2') is not null;
 select pg_temp.expect_eq('admin sees both clinics', 'select count(*) from public.clinics', 2);
 select pg_temp.expect_eq('activated leads marked won', $$select count(*) from public.leads where status = 'won'$$, 2);
 

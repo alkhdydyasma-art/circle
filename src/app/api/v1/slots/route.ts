@@ -10,7 +10,7 @@ const q = z.object({
 
 // GET /api/v1/slots?service=…&day=YYYY-MM-DD[&doctor=…][&branch=…] — open times (clinic-local day).
 export async function GET(request: Request) {
-  const key = keyHash(request);
+  const key = await keyHash(request);
   if (key instanceof Response) return key;
   const sp = new URL(request.url).searchParams;
   const p = q.safeParse({ service: sp.get("service"), day: sp.get("day"), doctor: sp.get("doctor") || undefined, branch: sp.get("branch") || undefined });

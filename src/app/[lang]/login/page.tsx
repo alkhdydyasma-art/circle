@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { hasLocale } from "@/i18n";
 import { getPortalDictionary } from "@/i18n/portal";
@@ -18,6 +19,7 @@ export default async function LoginPage({ params, searchParams }: PageProps<"/[l
   return (
     <AuthCard lang={lang} title={t.login.title} subtitle={t.login.subtitle}>
       <LoginForm lang={lang} t={t} next={typeof next === "string" ? next : undefined} />
+      <Link href={`/${lang}/forgot`} className="mt-4 block text-center text-sm text-muted hover:text-teal">{t.login.forgot}</Link>
       <p className="mt-6 text-center text-xs text-muted">{t.login.noAccount}</p>
     </AuthCard>
   );

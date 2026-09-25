@@ -30,7 +30,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         <LeadSection lang={lang} t={t} />
         <Faq t={t} />
       </main>
-      <SiteFooter t={t} />
+      <SiteFooter t={t} lang={lang} />
       <WhatsAppFab t={t} />
     </>
   );

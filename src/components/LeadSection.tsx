@@ -204,7 +204,10 @@ export function LeadSection({ lang, t }: { lang: Locale; t: Dictionary }) {
                 </Field>
                 <label className="flex items-start gap-3 text-sm text-muted">
                   <input required type="checkbox" name="consent" className="mt-1 size-4 accent-teal-500" />
-                  {l.fields.consent}
+                  <span>
+                    {l.fields.consent}{" "}
+                    <a href={`/${lang}/privacy`} target="_blank" className="text-teal underline underline-offset-2">{t.legal.readPrivacy}</a>
+                  </span>
                 </label>
                 {/* Honeypot: hidden from people, filled by bots. */}
                 <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />

@@ -16,7 +16,7 @@ const body = z.object({
 
 // POST /api/v1/appointments — book on behalf of a patient (AI agent / WhatsApp).
 export async function POST(request: Request) {
-  const key = keyHash(request);
+  const key = await keyHash(request);
   if (key instanceof Response) return key;
   const p = body.safeParse(await request.json().catch(() => null));
   if (!p.success) return json({ error: "invalid_request", issues: p.error.issues.map((i) => i.path.join(".")) }, 400);
@@ -27,8 +27,10 @@ export async function POST(request: Request) {
   });
   if (res instanceof Response) return res;
   const appointment = withManageUrl(request, res.data);
+  const info = await rpc<{ clinic: { name: string } }>("api_clinic_info", { p_key_hash: key });
   await notifyBooking({
     event: "appointment.booked", source: d.source,
+    clinic: { name: info instanceof Response ? "" : info.data.clinic.name },
     appointment: { ...appointment, when: formatWhen(res.data.starts_at) },
     patient: { name: d.full_name, phone: normalizeSaudiMobile(d.phone) },
   });
@@ -37,7 +39,7 @@ export async function POST(request: Request) {
 
 // GET /api/v1/appointments?phone=05… — the patient's upcoming appointments.
 export async function GET(request: Request) {
-  const key = keyHash(request);
+  const key = await keyHash(request);
   if (key instanceof Response) return key;
   const phone = new URL(request.url).searchParams.get("phone");
   if (!phone) return json({ error: "invalid_request", issues: ["phone"] }, 400);

@@ -8,9 +8,11 @@ type Due = {
 
 // GET /api/v1/reminders — appointments due for a reminder (per the clinic's settings),
 // each with a fresh self-service link and a ready-to-send Arabic message.
+// The message deliberately omits the treatment and doctor: WhatsApp is processed outside
+// the Kingdom, so we send only what the patient needs to show up (data minimisation).
 // After sending, call POST /api/v1/reminders/{id}/sent.
 export async function GET(request: Request) {
-  const key = keyHash(request);
+  const key = await keyHash(request);
   if (key instanceof Response) return key;
   const res = await rpc<Due[]>("api_due_reminders", { p_key_hash: key });
   if (res instanceof Response) return res;
@@ -25,7 +27,7 @@ export async function GET(request: Request) {
       message:
         `مرحباً ${r.patient_name} 👋\n` +
         `نذكّرك بموعدك في ${r.clinic}\n` +
-        `🦷 ${r.service} مع ${r.doctor}\n📅 ${when}\n📍 ${r.branch}${r.maps_url ? `\n${r.maps_url}` : ""}\n\n` +
+        `📅 ${when}\n📍 ${r.branch}${r.maps_url ? `\n${r.maps_url}` : ""}\n\n` +
         `لتأكيد الحضور أو تغيير الموعد:\n${url}`,
     };
   });

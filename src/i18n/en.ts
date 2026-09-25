@@ -253,6 +253,13 @@ const en: Dictionary = {
     call: "Call us",
     whatsappMessage: "Hi, I'd like to learn more about Circle for my clinic",
   },
+  legal: {
+    privacy: "Privacy Policy",
+    terms: "Terms of Service",
+    updated: "Last updated",
+    contact: "For privacy requests and questions, reach us on the WhatsApp or phone number below.",
+    readPrivacy: "Read the privacy policy",
+  },
   footer: {
     contact: "Contact",
     tagline: "Smart automation for dental clinics.",

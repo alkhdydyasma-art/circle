@@ -1,4 +1,5 @@
 import { leadSchema, type Lead } from "@/lib/lead-schema";
+import { allowRequest, tooMany } from "@/lib/rate-limit";
 
 // Demo requests: validated here, stored in Supabase with the server-only service
 // role key (the table has RLS with no public policies), then optionally announced
@@ -56,6 +57,7 @@ async function notifyN8n(lead: Lead) {
 }
 
 export async function POST(request: Request) {
+  if (!(await allowRequest("lead", request))) return tooMany();
   let body: Record<string, unknown>;
   try {
     body = await request.json();

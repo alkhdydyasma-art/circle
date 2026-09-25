@@ -17,8 +17,8 @@ declare
   s_aligners uuid := '0c11c000-0000-4000-8000-0000000000e5';
   s_implant uuid := '0c11c000-0000-4000-8000-0000000000e6';
 begin
-  insert into public.clinics (id, name, city, clinic_type, status, plan, platform)
-  values (v_clinic, 'عيادة النور لطب الأسنان', 'جدة', 'general', 'active', 'standard', 'smart_clinic')
+  insert into public.clinics (id, name, city, clinic_type, status, plan)
+  values (v_clinic, 'عيادة النور لطب الأسنان', 'جدة', 'general', 'active', 'standard')
   on conflict (id) do update set name = excluded.name, status = 'active';
 
   update public.clinic_sites set

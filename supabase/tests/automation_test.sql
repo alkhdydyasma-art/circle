@@ -45,9 +45,9 @@ insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a1', 'owner@a.sa'),
   ('00000000-0000-0000-0000-0000000000a2', 'reception@a.sa'),
   ('00000000-0000-0000-0000-0000000000b1', 'owner@b.sa');
-insert into public.clinics (id, name, city, clinic_type, status, platform) values
-  ('c000000a-0000-0000-0000-000000000000', 'Clinic A', 'Jeddah', 'general', 'active', 'smart_clinic'),
-  ('c000000b-0000-0000-0000-000000000000', 'Clinic B', 'Riyadh', 'general', 'active', 'smart_clinic');
+insert into public.clinics (id, name, city, clinic_type, status) values
+  ('c000000a-0000-0000-0000-000000000000', 'Clinic A', 'Jeddah', 'general', 'active'),
+  ('c000000b-0000-0000-0000-000000000000', 'Clinic B', 'Riyadh', 'general', 'active');
 insert into public.clinic_members values
   ('c000000a-0000-0000-0000-000000000000', '00000000-0000-0000-0000-0000000000a1', 'owner', now()),
   ('c000000a-0000-0000-0000-000000000000', '00000000-0000-0000-0000-0000000000a2', 'reception', now()),

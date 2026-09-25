@@ -8,7 +8,7 @@ export type Role = "owner" | "manager" | "doctor" | "reception";
 export type ClinicContext = {
   clinic: {
     id: string; name: string; city: string; status: "pending" | "active" | "suspended";
-    plan: "starter" | "standard" | "pro"; platform: "smart_clinic" | "medent"; platform_url: string | null;
+    plan: "starter" | "standard" | "pro";
   };
   site: { slug: string; published: boolean; timezone: string };
   role: Role | null;
@@ -29,7 +29,7 @@ export const getClinicContext = cache(async (id: string): Promise<ClinicContext>
   if (!user) notFound();
 
   const [{ data: clinic }, { data: site }, { data: isAdmin }, { data: role }] = await Promise.all([
-    supabase.from("clinics").select("id, name, city, status, plan, platform, platform_url").eq("id", id).maybeSingle(),
+    supabase.from("clinics").select("id, name, city, status, plan").eq("id", id).maybeSingle(),
     supabase.from("clinic_sites").select("slug, published, timezone").eq("clinic_id", id).maybeSingle(),
     supabase.rpc("is_platform_admin"),
     supabase.rpc("clinic_role_of", { p_clinic: id }),

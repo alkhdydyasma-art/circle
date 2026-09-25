@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { ExternalLink } from "lucide-react";
 import { hasLocale } from "@/i18n";
 import { getPortalDictionary } from "@/i18n/portal";
 import { createClient, getUser } from "@/lib/supabase/server";
@@ -12,7 +11,7 @@ const ALL_ROLES: Role[] = ["owner", "manager", "doctor", "reception"];
 
 type Clinic = {
   id: string; name: string; city: string; status: "pending" | "active" | "suspended";
-  plan: "starter" | "standard" | "pro"; platform: "smart_clinic" | "medent"; platform_url: string | null;
+  plan: "starter" | "standard" | "pro";
 };
 type Member = { user_id: string; email: string; role: Role; created_at: string };
 type Invite = { id: string; email: string; role: Role; expires_at: string };
@@ -56,18 +55,10 @@ export default async function ClinicPage({ params }: PageProps<"/[lang]/portal/c
           <h1 className="text-3xl font-semibold">{clinic.name}</h1>
           <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
             <Badge tone={statusTone[clinic.status]}>{t.clinicStatus[clinic.status]}</Badge>
-            {t.platforms[clinic.platform]} · {t.plans[clinic.plan]}
+            {t.plans[clinic.plan]}
             {role && <Badge>{t.roles[role]}</Badge>}
           </p>
         </div>
-        {clinic.status === "active" && clinic.platform_url ? (
-          <a href={clinic.platform_url} target="_blank" rel="noopener noreferrer" className="bg-brand-gradient inline-flex items-center gap-2 rounded-full px-5 py-2.5 font-semibold text-white">
-            {t.clinic.openPlatform}
-            <ExternalLink className="size-4" />
-          </a>
-        ) : (
-          <p className="text-sm text-muted">{t.clinic.notActive}</p>
-        )}
       </div>
 
       <Card title={t.clinic.details}>

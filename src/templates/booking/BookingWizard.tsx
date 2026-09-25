@@ -291,7 +291,10 @@ export function BookingWizard(p: Props) {
             </label>
             <label className="flex items-start gap-3 text-sm text-site-muted">
               <input required type="checkbox" name="consent" className="mt-1 size-4 accent-[var(--c-primary)]" />
-              {t.consent}
+              <span>
+                {t.consent}{" "}
+                <a href={`/${p.lang}/privacy#sharing`} target="_blank" className="text-site-primary underline underline-offset-2">{t.privacy}</a>
+              </span>
             </label>
             <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
             {error && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{t.errors[error]}</p>}

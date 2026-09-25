@@ -19,6 +19,7 @@ Bilingual (Arabic RTL / English LTR) marketing site for Circle — AI automation
 | `SITE_URL` | Public site URL used in invitation links, e.g. `https://circle.sa` |
 | `N8N_LEAD_WEBHOOK_URL` | Optional n8n webhook notified of each new lead |
 | `N8N_WEBHOOK_SECRET` | Optional, sent as `x-circle-secret` header |
+| `RATE_LIMIT_SALT` | Random secret used to hash client IPs for rate limiting (falls back to the service key) |
 
 ## Develop
 
@@ -27,11 +28,13 @@ npm install
 npm run dev
 ```
 
-Deploy: import the GitHub repo into Vercel and set the variables above.
+Deploy: patient data must stay in Saudi Arabia (PDPL), so production runs self-hosted Supabase + this app +
+n8n on a VM in a Saudi region (Oracle Cloud Riyadh). Don't use hosted services outside KSA for patient data.
 
 ## Database
 
-Run the SQL in `supabase/migrations/` in order (Supabase Dashboard → SQL Editor, or `supabase db push`).
+Run `supabase/setup.sql` (all migrations concatenated) in the SQL Editor, or the files in
+`supabase/migrations/` in order.
 
 Then in Supabase:
 
@@ -42,11 +45,13 @@ Then in Supabase:
    insert into public.platform_admins (user_id)
    select id from auth.users where email = 'you@example.com';
    ```
+3. **Password reset** (`/ar/forgot`): configure SMTP for Auth, and add `{SITE_URL}/auth/callback` to the
+   allowed redirect URLs. The email link lands on `/auth/callback`, which opens `/{lang}/reset-password`.
 
 ## Clinic portal (`/ar/portal`, `/en/portal`)
 
 - **Circle admin**: sees all demo requests and clinics, activates a lead (creates the clinic + an owner
-  invitation link to send on WhatsApp), sets status / plan / platform URL.
+  invitation link to send on WhatsApp), sets status / plan.
 - **Clinic members**: see only their own clinic. Roles: owner, manager, doctor, reception.
   Owners manage everyone; managers manage doctors and reception; doctors and reception are read-only.
 
@@ -61,6 +66,8 @@ Then in Supabase:
   `/portal`. Portal pages send `Cache-Control: private, no-store` and `noindex`.
 - **Invitations**: 256-bit random tokens; only their SHA-256 is stored; single use; expire after 7 days;
   bound to the invited email.
+- **Rate limiting**: lead form, booking, availability, sign-in, invitations, self-service links and
+  the clinic API are limited per hashed IP (or API key) via `rate_limit_hit` in Postgres (`src/lib/rate-limit.ts`).
 - **Headers**: HSTS, `X-Frame-Options: DENY`, `nosniff`, strict referrer and permissions policies.
 
 ### Clinic data & public booking
@@ -146,11 +153,16 @@ blocked by the same exclusion constraint as online booking. Draft previews live 
 ### Tests
 
 `supabase/tests/run.sh` loads the migrations into a throwaway Postgres (with a stub of Supabase's
-`auth` schema) and runs every `*_test.sql` — 138 tenant-isolation, permission, booking and automation checks:
+`auth` schema) and runs every `*_test.sql` — 146 tenant-isolation, permission, booking and automation checks:
 
 ```bash
 PGHOST=localhost PGUSER=postgres supabase/tests/run.sh
 ```
+
+## Legal pages
+
+`/ar/privacy` and `/ar/terms` (`src/legal/content.ts`) are a **draft that needs lawyer review**. Fill in
+the business details in `src/lib/company.ts` (freelance document number, privacy email) before launch.
 
 ## Testimonials
 

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { anonClient } from "@/lib/sites";
 import { hashToken } from "@/lib/tokens";
+import { allowAction } from "@/lib/rate-limit";
 
 // Patient self-service actions. The link token is the only credential; the database
 // functions check the clinic's cutoff and slot availability.
@@ -14,6 +15,7 @@ export type ManageSlot = { doctor_id: string; branch_id: string; starts_at: stri
 const token = z.string().regex(/^[0-9a-f]{64}$/);
 
 async function call(fn: string, args: Record<string, unknown>): Promise<ManageResult> {
+  if (!(await allowAction("manage"))) return { ok: false, error: "error" };
   const { error } = await anonClient().rpc(fn, args);
   if (!error) return { ok: true };
   if (error.message.includes("too_late_to_change")) return { ok: false, error: "too_late" };

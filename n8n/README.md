@@ -26,12 +26,14 @@ must be templates.
 
 ## Templates to submit
 
+Both templates carry **no treatment or doctor name** — WhatsApp is processed by Meta outside the
+Kingdom, so messages include only what the patient needs to attend (data minimisation under PDPL).
+
 `booking_confirmation` — 5 parameters:
 
 ```
 مرحباً {{1}} 👋
-تم استلام حجزك:
-🦷 {{2}}
+تم استلام حجزك في {{2}}
 📅 {{3}}
 📍 {{4}}
 
@@ -39,17 +41,16 @@ must be templates.
 {{5}}
 ```
 
-`appointment_reminder` — 6 parameters:
+`appointment_reminder` — 5 parameters:
 
 ```
 مرحباً {{1}} 👋
 نذكّرك بموعدك في {{2}}
-🦷 {{3}}
-📅 {{4}}
-📍 {{5}}
+📅 {{3}}
+📍 {{4}}
 
 لتأكيد الحضور أو تغيير الموعد:
-{{6}}
+{{5}}
 ```
 
 ## Several clinics

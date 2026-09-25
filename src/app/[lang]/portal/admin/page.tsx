@@ -16,7 +16,7 @@ type Lead = {
 };
 type Clinic = {
   id: string; name: string; city: string; status: "pending" | "active" | "suspended";
-  plan: "starter" | "standard" | "pro"; platform: "smart_clinic" | "medent"; platform_url: string | null;
+  plan: "starter" | "standard" | "pro";
 };
 
 export default async function AdminPage({ params }: PageProps<"/[lang]/portal/admin">) {
@@ -45,9 +45,9 @@ export default async function AdminPage({ params }: PageProps<"/[lang]/portal/ad
             {clinics.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 <Link href={`/${lang}/portal/clinic/${c.id}`} className="font-medium hover:text-teal">
-                  {c.name} <span className="text-sm text-muted">· {c.city} · {t.platforms[c.platform]}</span>
+                  {c.name} <span className="text-sm text-muted">· {c.city}</span>
                 </Link>
-                <form key={`${c.status}-${c.plan}-${c.platform_url}`} action={updateClinicAdmin} className="flex flex-wrap items-center gap-2">
+                <form key={`${c.status}-${c.plan}`} action={updateClinicAdmin} className="flex flex-wrap items-center gap-2">
                   <input type="hidden" name="lang" value={lang} />
                   <input type="hidden" name="id" value={c.id} />
                   <Badge tone={statusTone[c.status]}>{t.clinicStatus[c.status]}</Badge>
@@ -57,7 +57,6 @@ export default async function AdminPage({ params }: PageProps<"/[lang]/portal/ad
                   <select name="plan" defaultValue={c.plan} aria-label={t.admin.cols.plan} className={fieldCls}>
                     {(["starter", "standard", "pro"] as const).map((p) => <option key={p} value={p}>{t.plans[p]}</option>)}
                   </select>
-                  <input name="platformUrl" type="url" dir="ltr" defaultValue={c.platform_url ?? ""} placeholder="https://" aria-label={t.admin.cols.url} className={`${fieldCls} w-52`} />
                   <button className={btnCls}>{t.admin.save}</button>
                 </form>
               </li>

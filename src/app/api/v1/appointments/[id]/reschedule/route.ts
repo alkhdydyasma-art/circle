@@ -11,7 +11,7 @@ const body = z.object({
 
 // POST /api/v1/appointments/{id}/reschedule  { phone, starts_at, doctor_id?, branch_id? }
 export async function POST(request: Request, { params }: RouteContext<"/api/v1/appointments/[id]/reschedule">) {
-  const key = keyHash(request);
+  const key = await keyHash(request);
   if (key instanceof Response) return key;
   const { id } = await params;
   const p = body.safeParse({ id, ...(await request.json().catch(() => ({}))) });

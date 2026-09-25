@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { getAvailability, localDay } from "@/lib/booking";
 import { getPublicSite } from "@/lib/sites";
+import { allowRequest, tooMany } from "@/lib/rate-limit";
 
 const query = z.object({
   service: z.string().uuid(),
@@ -9,6 +10,7 @@ const query = z.object({
 
 // GET /api/sites/{slug}/availability?service=…&doctor=… → { days: { "YYYY-MM-DD": Slot[] } }
 export async function GET(request: Request, { params }: RouteContext<"/api/sites/[slug]/availability">) {
+  if (!(await allowRequest("availability", request))) return tooMany();
   const { slug } = await params;
   const url = new URL(request.url);
   const parsed = query.safeParse({

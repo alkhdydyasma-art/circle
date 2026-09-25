@@ -1,6 +1,7 @@
 import "server-only";
 import { anonClient } from "@/lib/sites";
 import { hashToken } from "@/lib/tokens";
+import { allow, tooMany } from "@/lib/rate-limit";
 
 // Shared plumbing for /api/v1/*: API-key auth, error mapping and link building.
 // Every call goes to an api_* SQL function that resolves the clinic from the key hash,
@@ -22,10 +23,12 @@ const STATUS: Record<string, number> = {
 export const json = (body: unknown, status = 200) =>
   Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
-/** SHA-256 of the bearer key, or a 401 response. */
-export function keyHash(request: Request): string | Response {
+/** SHA-256 of the bearer key, or a 401 / 429 response. */
+export async function keyHash(request: Request): Promise<string | Response> {
   const key = request.headers.get("authorization")?.match(/^Bearer\s+(ck_[A-Za-z0-9_-]{20,80})$/)?.[1];
-  return key ? hashToken(key) : json({ error: "invalid_api_key" }, 401);
+  if (!key) return json({ error: "invalid_api_key" }, 401);
+  const hash = hashToken(key);
+  return (await allow("api", hash)) ? hash : tooMany();
 }
 
 export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<{ data: T } | Response> {

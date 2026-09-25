@@ -1,9 +1,12 @@
 import { MessageCircle, Phone } from "lucide-react";
-import type { Dictionary } from "@/i18n";
+import Link from "next/link";
+import type { Dictionary, Locale } from "@/i18n";
+import { COMPANY } from "@/lib/company";
 import { PHONE_DISPLAY, telUrl, whatsappUrl } from "@/lib/contact";
 import { Logo } from "./Logo";
 
-export function SiteFooter({ t }: { t: Dictionary }) {
+export function SiteFooter({ t, lang }: { t: Dictionary; lang: Locale }) {
+  const legalId = lang === "ar" ? COMPANY.legalIdAr : COMPANY.legalIdEn;
   return (
     <footer className="border-t border-line">
       <div className="mx-auto grid max-w-6xl gap-8 px-6 py-12 text-sm text-muted md:grid-cols-[1fr_auto] md:px-8">
@@ -12,6 +15,11 @@ export function SiteFooter({ t }: { t: Dictionary }) {
           <p>{t.footer.tagline}</p>
           <p>
             © {new Date().getFullYear()} Circle. {t.footer.rights}
+          </p>
+          {legalId && <p>{legalId}</p>}
+          <p className="flex gap-4">
+            <Link href={`/${lang}/privacy`} className="hover:text-ink">{t.legal.privacy}</Link>
+            <Link href={`/${lang}/terms`} className="hover:text-ink">{t.legal.terms}</Link>
           </p>
         </div>
         <div className="space-y-3">

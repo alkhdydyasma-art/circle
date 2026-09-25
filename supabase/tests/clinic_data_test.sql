@@ -54,9 +54,9 @@ insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a4', 'drali@noor.sa'),
   ('00000000-0000-0000-0000-0000000000b1', 'owner@smile.sa');
 
-insert into public.clinics (id, name, city, clinic_type, status, platform) values
-  ('c0000000-0000-0000-0000-00000000000a', 'Noor Dental', 'Jeddah', 'general', 'active', 'smart_clinic'),
-  ('c0000000-0000-0000-0000-00000000000b', 'Smile Center', 'Riyadh', 'ortho', 'active', 'smart_clinic');
+insert into public.clinics (id, name, city, clinic_type, status) values
+  ('c0000000-0000-0000-0000-00000000000a', 'Noor Dental', 'Jeddah', 'general', 'active'),
+  ('c0000000-0000-0000-0000-00000000000b', 'Smile Center', 'Riyadh', 'ortho', 'active');
 
 insert into public.clinic_members (clinic_id, user_id, role) values
   ('c0000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000000a1', 'owner'),

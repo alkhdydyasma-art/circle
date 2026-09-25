@@ -12,7 +12,10 @@
       "name": "Booking from Circle",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "webhookId": "7a1b2c3d-00ff-4000-8000-0000000000ff",
       "notes": "Credential: Header Auth — Name: x-circle-secret, Value: same as N8N_WEBHOOK_SECRET in Vercel. Put this webhook's production URL in N8N_BOOKING_WEBHOOK_URL."
     },
@@ -24,19 +27,34 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.body.patient.phone.replace('+', '') }}\",\n  \"type\": \"template\",\n  \"template\": {\n    \"name\": \"booking_confirmation\",\n    \"language\": { \"code\": \"ar\" },\n    \"components\": [\n      { \"type\": \"body\", \"parameters\": [\n        { \"type\": \"text\", \"text\": {{ JSON.stringify($json.body.patient.name) }} },\n        { \"type\": \"text\", \"text\": {{ JSON.stringify($json.body.appointment.service + ' — ' + $json.body.appointment.doctor) }} },\n        { \"type\": \"text\", \"text\": {{ JSON.stringify($json.body.appointment.when) }} },\n        { \"type\": \"text\", \"text\": {{ JSON.stringify($json.body.appointment.branch) }} },\n        { \"type\": \"text\", \"text\": {{ JSON.stringify($json.body.appointment.manage_url) }} }\n      ] }\n    ]\n  }\n}",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.body.patient.phone.replace('+', '') }}\",\n  \"type\": \"template\",\n  \"template\": {\n    \"name\": \"booking_confirmation\",\n    \"language\": { \"code\": \"ar\" },\n    \"components\": [\n      { \"type\": \"body\", \"parameters\": [\n        { \"type\": \"text\", \"text\": {{ JSON.stringify($json.body.patient.name) }} },\n        { \"type\": \"text\", \"text\": {{ JSON.stringify($json.body.clinic?.name ?? '') }} },\n        { \"type\": \"text\", \"text\": {{ JSON.stringify($json.body.appointment.when) }} },\n        { \"type\": \"text\", \"text\": {{ JSON.stringify($json.body.appointment.branch) }} },\n        { \"type\": \"text\", \"text\": {{ JSON.stringify($json.body.appointment.manage_url) }} }\n      ] }\n    ]\n  }\n}",
         "options": {}
       },
       "id": "7a1b2c3d-0002-4000-8000-000000000002",
       "name": "Send WhatsApp template",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [240, 0],
+      "position": [
+        240,
+        0
+      ],
       "notes": "Credential: Header Auth — Name: Authorization, Value: Bearer <WhatsApp Cloud API token>"
     }
   ],
   "connections": {
-    "Booking from Circle": { "main": [[{ "node": "Send WhatsApp template", "type": "main", "index": 0 }]] }
+    "Booking from Circle": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1" }
+  "settings": {
+    "executionOrder": "v1"
+  }
 }
