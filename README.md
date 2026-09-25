@@ -29,7 +29,7 @@ npm run dev
 ```
 
 Deploy: patient data must stay in Saudi Arabia (PDPL), so production runs self-hosted Supabase + this app +
-n8n on one VM in Oracle Cloud Riyadh. Everything is scripted in [`deploy/`](deploy/README.md) (install,
+n8n on one VM in Oracle Cloud Jeddah (a Saudi region). Everything is scripted in [`deploy/`](deploy/README.md) (install,
 updates, encrypted backups, restore, monitoring). Don't use hosted services outside KSA for patient data.
 
 ## Database

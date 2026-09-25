@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Nightly backup (cron, 03:30 Riyadh): database, n8n, uploaded files and settings →
-# one archive encrypted with age → /opt/circle/backups (+ Oracle Object Storage, Riyadh).
+# one archive encrypted with age → /opt/circle/backups (+ Oracle Object Storage in the same Saudi region).
 . "$(dirname "$0")/lib.sh"
 load_conf
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time server setup for Circle on Ubuntu 22.04/24.04 (Oracle Cloud, Riyadh). Safe to re-run.
+# One-time server setup for Circle on Ubuntu 22.04/24.04 (Oracle Cloud, Jeddah/Riyadh). Safe to re-run.
 #
 #   sudo mkdir -p /opt/circle && sudo cp deploy/circle.conf.example /opt/circle/circle.conf
 #   sudo nano /opt/circle/circle.conf
