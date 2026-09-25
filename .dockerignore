@@ -1,0 +1,8 @@
+.git
+.next
+node_modules
+deploy
+n8n
+supabase
+*.md
+.env*

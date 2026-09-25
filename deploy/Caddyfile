@@ -1,0 +1,26 @@
+# Public entry point. HTTPS certificates are issued and renewed automatically.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+	# Password-reset links from Supabase Auth land here, then redirect to /auth/callback.
+	handle /auth/v1/verify* {
+		reverse_proxy api-gw:8000
+	}
+	handle {
+		reverse_proxy app:3000
+	}
+	header -Server
+}
+
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}
+
+{$N8N_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy n8n:5678
+	header -Server
+}

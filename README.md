@@ -16,7 +16,7 @@ Bilingual (Arabic RTL / English LTR) marketing site for Circle — AI automation
 | `SUPABASE_ANON_KEY` | Supabase anon key (used server-side only; the browser never talks to Supabase) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only key: inserts leads and creates accounts for accepted invitations. Never expose it |
 | `N8N_BOOKING_WEBHOOK_URL` | Optional n8n webhook called after each booking (website or API, event `appointment.booked`, includes `when` and `manage_url`) — see `n8n/` |
-| `SITE_URL` | Public site URL used in invitation links, e.g. `https://circle.sa` |
+| `SITE_URL` | Public site URL, e.g. `https://circle.sa`. Required in production: links and redirects are built from it (behind the proxy the app cannot see its public address) |
 | `N8N_LEAD_WEBHOOK_URL` | Optional n8n webhook notified of each new lead |
 | `N8N_WEBHOOK_SECRET` | Optional, sent as `x-circle-secret` header |
 | `RATE_LIMIT_SALT` | Random secret used to hash client IPs for rate limiting (falls back to the service key) |
@@ -29,7 +29,8 @@ npm run dev
 ```
 
 Deploy: patient data must stay in Saudi Arabia (PDPL), so production runs self-hosted Supabase + this app +
-n8n on a VM in a Saudi region (Oracle Cloud Riyadh). Don't use hosted services outside KSA for patient data.
+n8n on one VM in Oracle Cloud Riyadh. Everything is scripted in [`deploy/`](deploy/README.md) (install,
+updates, encrypted backups, restore, monitoring). Don't use hosted services outside KSA for patient data.
 
 ## Database
 

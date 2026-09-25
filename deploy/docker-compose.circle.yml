@@ -1,0 +1,93 @@
+# Circle's layer on top of the official self-hosted Supabase compose file.
+# Enabled by COMPOSE_FILE=docker-compose.yml:docker-compose.circle.yml in supabase/.env.
+#
+# Only Caddy is reachable from the internet (80/443). The Supabase API gateway listens on
+# 127.0.0.1 only (Studio through an SSH tunnel); the app talks to it on the internal network.
+
+services:
+  app:
+    build: ${CIRCLE_APP_DIR}
+    image: circle-app:latest
+    container_name: circle-app
+    restart: unless-stopped
+    depends_on:
+      api-gw:
+        condition: service_healthy
+    environment:
+      SUPABASE_URL: http://api-gw:8000
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      SITE_URL: https://${DOMAIN}
+      RATE_LIMIT_SALT: ${RATE_LIMIT_SALT}
+      N8N_BOOKING_WEBHOOK_URL: ${N8N_BOOKING_WEBHOOK_URL:-}
+      N8N_LEAD_WEBHOOK_URL: ${N8N_LEAD_WEBHOOK_URL:-}
+      N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET}
+      TZ: Asia/Riyadh
+
+  n8n:
+    image: n8nio/n8n:2.40.7
+    container_name: circle-n8n
+    restart: unless-stopped
+    environment:
+      N8N_HOST: ${N8N_DOMAIN}
+      N8N_PROTOCOL: https
+      N8N_PORT: 5678
+      N8N_LISTEN_ADDRESS: 0.0.0.0
+      WEBHOOK_URL: https://${N8N_DOMAIN}/
+      N8N_PROXY_HOPS: 1
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      GENERIC_TIMEZONE: Asia/Riyadh
+      TZ: Asia/Riyadh
+      N8N_RUNNERS_ENABLED: "true"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      # Workflows read CIRCLE_URL / WHATSAPP_PHONE_NUMBER_ID with $env (Variables need a paid plan).
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      CIRCLE_URL: http://app:3000
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      # Executions contain patient names and phone numbers: keep them for 14 days only.
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: 336
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  caddy:
+    image: caddy:2.11
+    container_name: circle-caddy
+    restart: unless-stopped
+    depends_on:
+      - app
+      - n8n
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+      N8N_DOMAIN: ${N8N_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ${CIRCLE_APP_DIR}/deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  # ── Supabase adjustments ──────────────────────────────────────────────────
+  api-gw:
+    ports: !override
+      - "127.0.0.1:8000:8000/tcp"
+
+  # Not used by Circle: don't run them (less memory, smaller attack surface).
+  supavisor:
+    profiles: [disabled]
+    ports: !reset []
+  realtime:
+    profiles: [disabled]
+  functions:
+    profiles: [disabled]
+
+volumes:
+  n8n_data:
+  caddy_data:
+  caddy_config:

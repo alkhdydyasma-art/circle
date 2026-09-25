@@ -10,6 +10,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  output: "standalone", // self-contained server for the Docker image (see Dockerfile)
   async redirects() {
     return [{ source: "/", destination: "/ar", permanent: false }];
   },

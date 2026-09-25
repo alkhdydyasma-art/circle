@@ -23,7 +23,7 @@
     },
     {
       "parameters": {
-        "url": "={{ $vars.CIRCLE_URL }}/api/v1/reminders",
+        "url": "={{ $env.CIRCLE_URL }}/api/v1/reminders",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}
@@ -55,7 +55,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://graph.facebook.com/v21.0/{{ $vars.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "url": "=https://graph.facebook.com/v21.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
@@ -76,7 +76,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $vars.CIRCLE_URL }}/api/v1/reminders/{{ $('One per appointment').item.json.id }}/sent",
+        "url": "={{ $env.CIRCLE_URL }}/api/v1/reminders/{{ $('One per appointment').item.json.id }}/sent",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}
