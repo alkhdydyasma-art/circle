@@ -50,7 +50,7 @@ export default async function BookPage({ params, searchParams }: PageProps<"/[la
           t={t}
           timezone={site.site.timezone}
           services={site.services}
-          doctors={site.doctors}
+          doctors={site.doctors.map((d) => ({ ...d, photo: safeImageUrl(d.photo_url) }))}
           branches={site.branches}
           initialServiceId={typeof service === "string" ? service : undefined}
           initialDoctorId={typeof doctor === "string" ? doctor : undefined}

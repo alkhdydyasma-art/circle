@@ -15,6 +15,7 @@ const ar = {
     lost: "لم يتم",
   },
   plans: { starter: "أساسية", standard: "قياسية", pro: "احترافية" },
+  showPassword: "إظهار كلمة المرور",
   login: {
     title: "تسجيل الدخول",
     subtitle: "ادخل لوحة تحكم عيادتك.",
@@ -118,6 +119,7 @@ const ar = {
   dash: {
     nav: { today: "اليوم", appointments: "المواعيد", patients: "المرضى", services: "الخدمات", doctors: "الأطباء والدوام", website: "الموقع والهوية", automation: "الأتمتة", team: "الفريق والإعدادات" },
     viewSite: "عرض الموقع",
+    sure: "متأكد؟ اضغط مرة ثانية", call: "اتصال", whatsapp: "واتساب", noAppointmentsDays: "بدون مواعيد:",
     status: { pending: "بانتظار التأكيد", confirmed: "مؤكد", completed: "تم", cancelled: "ملغي", no_show: "لم يحضر" },
     source: { website: "الموقع", whatsapp: "واتساب", dashboard: "اللوحة", ai_agent: "الوكيل الذكي" },
     actions: { confirm: "تأكيد", complete: "تم", noShow: "لم يحضر", cancel: "إلغاء" },
@@ -126,6 +128,15 @@ const ar = {
       kpis: { today: "مواعيد اليوم", pending: "بانتظار التأكيد", week: "هذا الأسبوع", website: "حُجزت من الموقع" },
       empty: "لا توجد مواعيد اليوم.",
       upcoming: "القادمة",
+      share: "شارك رابط الحجز مع مرضاك (واتساب، إنستقرام، قوقل ماب):", copy: "نسخ", copied: "تم النسخ",
+    },
+    setup: {
+      title: "جهّز عيادتك", progress: "{done} من {total} خطوات",
+      hint: "خطوات بسيطة ويصير موقعك جاهز يستقبل الحجوزات.",
+      steps: {
+        services: "أضف خدماتك وأسعارها", doctors: "أضف أطباءك", hours: "حدّد أوقات دوام الأطباء",
+        logo: "ارفع شعار العيادة", whatsapp: "أضف رقم واتساب العيادة", publish: "انشر موقعك",
+      },
     },
     appt: {
       title: "المواعيد",
@@ -205,6 +216,7 @@ const en: PortalDictionary = {
     lost: "Lost",
   },
   plans: { starter: "Starter", standard: "Standard", pro: "Pro" },
+  showPassword: "Show password",
   login: {
     title: "Sign in",
     subtitle: "Access your clinic dashboard.",
@@ -308,6 +320,7 @@ const en: PortalDictionary = {
   dash: {
     nav: { today: "Today", appointments: "Appointments", patients: "Patients", services: "Services", doctors: "Doctors & hours", website: "Website & brand", automation: "Automation", team: "Team & settings" },
     viewSite: "View site",
+    sure: "Sure? Tap again", call: "Call", whatsapp: "WhatsApp", noAppointmentsDays: "No appointments:",
     status: { pending: "Pending", confirmed: "Confirmed", completed: "Completed", cancelled: "Cancelled", no_show: "No-show" },
     source: { website: "Website", whatsapp: "WhatsApp", dashboard: "Dashboard", ai_agent: "AI agent" },
     actions: { confirm: "Confirm", complete: "Done", noShow: "No-show", cancel: "Cancel" },
@@ -316,6 +329,15 @@ const en: PortalDictionary = {
       kpis: { today: "Today", pending: "Pending", week: "This week", website: "Booked online" },
       empty: "No appointments today.",
       upcoming: "Upcoming",
+      share: "Share your booking link with patients (WhatsApp, Instagram, Google Maps):", copy: "Copy", copied: "Copied",
+    },
+    setup: {
+      title: "Set up your clinic", progress: "{done} of {total} steps",
+      hint: "A few simple steps and your website is ready to take bookings.",
+      steps: {
+        services: "Add your services and prices", doctors: "Add your doctors", hours: "Set doctors' working hours",
+        logo: "Upload the clinic logo", whatsapp: "Add the clinic's WhatsApp number", publish: "Publish your website",
+      },
     },
     appt: {
       title: "Appointments",

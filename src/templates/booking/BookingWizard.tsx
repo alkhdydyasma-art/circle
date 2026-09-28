@@ -6,7 +6,7 @@ import type { Locale } from "@/i18n";
 import type { SiteStrings } from "../strings";
 
 type Service = { id: string; name: string; description: string | null; duration_minutes: number; price: number | null };
-type Doctor = { id: string; full_name: string; title: string | null; specialty: string | null; service_ids: string[] };
+type Doctor = { id: string; full_name: string; title: string | null; specialty: string | null; service_ids: string[]; photo?: string };
 type Branch = { id: string; name: string };
 type Slot = { doctor_id: string; branch_id: string; starts_at: string };
 type Booked = { id: string; starts_at: string; service: string; doctor: string; branch: string; manage_url?: string };
@@ -104,6 +104,13 @@ export function BookingWizard(p: Props) {
     const seen = new Set<string>();
     return list.filter((s) => (seen.has(s.starts_at) ? false : (seen.add(s.starts_at), true)));
   }, [day, days]);
+
+  // Morning / evening groups make a long list of times easier to scan.
+  const periods = useMemo(() => {
+    const hour = new Intl.DateTimeFormat("en-GB", { timeZone: p.timezone, hour: "numeric", hourCycle: "h23" });
+    const am = times.filter((s) => Number(hour.format(new Date(s.starts_at))) < 12);
+    return [[t.morning, am], [t.evening, times.filter((s) => !am.includes(s))]] as const;
+  }, [times, p.timezone, t.morning, t.evening]);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -218,13 +225,28 @@ export function BookingWizard(p: Props) {
           <h2 className="mb-5 text-2xl font-bold">{t.chooseDoctor}</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             <button type="button" onClick={() => { setDoctorId("any"); setStep(2); }} className={`${card} ${doctorId === "any" ? selected : ""}`}>
-              <span className="flex items-center gap-2 font-semibold"><UserRound className="size-4 text-site-primary" />{t.anyDoctor}</span>
-              <span className="mt-1 block text-sm text-site-muted">{t.anyDoctorHint}</span>
+              <span className="flex items-center gap-3">
+                <span className="grid size-12 shrink-0 place-items-center rounded-full bg-site-surface text-site-primary"><UserRound className="size-5" /></span>
+                <span>
+                  <span className="block font-semibold">{t.anyDoctor}</span>
+                  <span className="mt-0.5 block text-sm text-site-muted">{t.anyDoctorHint}</span>
+                </span>
+              </span>
             </button>
             {doctorsForService.map((d) => (
               <button key={d.id} type="button" onClick={() => { setDoctorId(d.id); setStep(2); }} className={`${card} ${doctorId === d.id ? selected : ""}`}>
-                <span className="flex items-center gap-2 font-semibold"><Stethoscope className="size-4 text-site-primary" />{d.full_name}</span>
-                <span className="mt-1 block text-sm text-site-muted">{[d.title, d.specialty].filter(Boolean).join(" · ")}</span>
+                <span className="flex items-center gap-3">
+                  {d.photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- uploaded clinic photo
+                    <img src={d.photo} alt="" className="size-12 shrink-0 rounded-full object-cover object-top" />
+                  ) : (
+                    <span className="grid size-12 shrink-0 place-items-center rounded-full bg-site-surface text-site-primary"><Stethoscope className="size-5" /></span>
+                  )}
+                  <span className="min-w-0">
+                    <span className="block font-semibold">{d.full_name}</span>
+                    <span className="mt-0.5 block text-sm text-site-muted">{[d.title, d.specialty].filter(Boolean).join(" · ")}</span>
+                  </span>
+                </span>
               </button>
             ))}
           </div>
@@ -263,21 +285,26 @@ export function BookingWizard(p: Props) {
                   </button>
                 ))}
               </div>
-              <div className="mt-5 grid grid-cols-3 gap-2 sm:grid-cols-5">
-                {times.length === 0 && <p className="col-span-full text-site-muted">{t.noTimes}</p>}
-                {times.map((s) => (
+              {times.length === 0 && <p className="mt-5 text-site-muted">{t.noTimes}</p>}
+              {periods.map(([label, list]) => list.length > 0 && (
+              <div key={label} className="mt-5">
+                <p className="mb-2 text-sm font-semibold text-site-muted">{label}</p>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                {list.map((s) => (
                   <button
                     key={s.starts_at}
                     type="button"
                     onClick={() => { setSlot(s); setError(null); setStep(3); }}
-                    className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
+                    className={`min-h-11 rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
                       slot?.starts_at === s.starts_at ? "border-site-primary bg-site-primary text-site-primary-fg" : "border-site-line bg-site-bg hover:border-site-primary"
                     }`}
                   >
                     <bdi>{fmtTime.format(new Date(s.starts_at))}</bdi>
                   </button>
                 ))}
+                </div>
               </div>
+              ))}
             </>
           )}
         </section>
@@ -286,7 +313,7 @@ export function BookingWizard(p: Props) {
       {/* 4. Details */}
       {step === 3 && service && slot && (
         <section className="grid gap-6 md:grid-cols-[1fr_17rem]">
-          <form onSubmit={submit} className="space-y-4">
+          <form onSubmit={submit} className="order-2 space-y-4 md:order-1">
             <h2 className="text-2xl font-bold">{t.yourDetails}</h2>
             <label className="block">
               <span className="mb-1.5 block text-sm text-site-muted">{t.name}</span>
@@ -296,13 +323,14 @@ export function BookingWizard(p: Props) {
               <span className="mb-1.5 block text-sm text-site-muted">{t.phone}</span>
               <input required name="phone" type="tel" inputMode="tel" dir="ltr" autoComplete="tel" placeholder="05XXXXXXXX"
                 pattern="^(\+?966|00966|0)?5[0-9]{8}$" className={`${input} rtl:text-right`} />
+              <span className="mt-1.5 block text-xs text-site-muted">{t.phoneHint}</span>
             </label>
             <label className="block">
               <span className="mb-1.5 block text-sm text-site-muted">{t.notes}</span>
               <textarea name="notes" maxLength={500} rows={3} className={input} />
             </label>
-            <label className="flex items-start gap-3 text-sm text-site-muted">
-              <input required type="checkbox" name="consent" className="mt-1 size-4 accent-[var(--c-primary)]" />
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-site-line bg-site-card p-3.5 text-sm text-site-muted">
+              <input required type="checkbox" name="consent" className="mt-0.5 size-5 shrink-0 accent-[var(--c-primary)]" />
               <span>
                 {t.consent}{" "}
                 <a href={`/${p.lang}/privacy#sharing`} target="_blank" className="text-site-primary underline underline-offset-2">{t.privacy}</a>
@@ -315,7 +343,7 @@ export function BookingWizard(p: Props) {
             </button>
           </form>
 
-          <aside className="h-fit rounded-2xl bg-site-surface p-5 text-sm">
+          <aside className="order-1 h-fit rounded-2xl border border-site-line bg-site-surface p-5 text-sm md:order-2">
             <p className="font-semibold">{t.summary}</p>
             <ul className="mt-4 space-y-3">
               <li className="flex items-start gap-2"><Check className="mt-0.5 size-4 text-site-primary" />{service.name}</li>

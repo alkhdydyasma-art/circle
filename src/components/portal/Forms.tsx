@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import type { ActionState } from "@/app/actions/portal";
 import { activateLead, acceptInvite, inviteMember, requestPasswordReset, signIn, updateClinic, updatePassword } from "@/app/actions/portal";
 import type { PortalDictionary } from "@/i18n/portal";
@@ -37,7 +38,7 @@ export function LoginForm({ lang, t, next }: P & { next?: string }) {
       </label>
       <label className="block text-sm">
         <span className="mb-1 block text-muted">{t.login.password}</span>
-        <input required name="password" type="password" dir="ltr" autoComplete="current-password" className={inputCls} />
+        <PasswordInput name="password" autoComplete="current-password" show={t.showPassword} />
       </label>
       <ErrorLine state={state} t={t} />
       <button disabled={pending} className={`${btnCls} w-full py-2.5`}>{t.login.submit}</button>
@@ -54,7 +55,7 @@ export function AcceptInviteForm({ lang, t, token, needsPassword }: P & { token:
       {needsPassword && (
         <label className="block text-sm">
           <span className="mb-1 block text-muted">{t.invite.createPassword}</span>
-          <input required minLength={8} maxLength={200} name="password" type="password" dir="ltr" autoComplete="new-password" className={inputCls} />
+          <PasswordInput name="password" autoComplete="new-password" minLength={8} show={t.showPassword} />
         </label>
       )}
       <ErrorLine state={state.error === "invalid" ? { error: "error" } : state} t={t} />
@@ -155,14 +156,29 @@ export function NewPasswordForm({ lang, t }: P) {
       <input type="hidden" name="lang" value={lang} />
       <label className="block text-sm">
         <span className="mb-1 block text-muted">{t.reset.newPassword}</span>
-        <input required minLength={8} maxLength={200} name="password" type="password" dir="ltr" autoComplete="new-password" className={inputCls} />
+        <PasswordInput name="password" autoComplete="new-password" minLength={8} show={t.showPassword} />
       </label>
       <label className="block text-sm">
         <span className="mb-1 block text-muted">{t.reset.confirm}</span>
-        <input required minLength={8} maxLength={200} name="confirm" type="password" dir="ltr" autoComplete="new-password" className={inputCls} />
+        <PasswordInput name="confirm" autoComplete="new-password" minLength={8} show={t.showPassword} />
       </label>
       <ErrorLine state={state} t={t} />
       <button disabled={pending} className={`${btnCls} w-full py-2.5`}>{t.reset.save}</button>
     </form>
+  );
+}
+
+// Password field with a show/hide toggle: typing blind on a phone keyboard causes most sign-in errors.
+function PasswordInput({ name, autoComplete, minLength, show }: { name: string; autoComplete: string; minLength?: number; show: string }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <span className="relative block">
+      <input required name={name} type={visible ? "text" : "password"} dir="ltr" autoComplete={autoComplete} minLength={minLength} maxLength={200}
+        autoCapitalize="none" autoCorrect="off" spellCheck={false} className={`${inputCls} pe-11`} />
+      <button type="button" onClick={() => setVisible((v) => !v)} aria-label={show} aria-pressed={visible}
+        className="absolute inset-y-0 end-0 grid w-11 place-items-center text-muted transition hover:text-ink">
+        {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+      </button>
+    </span>
   );
 }

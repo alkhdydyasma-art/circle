@@ -448,11 +448,27 @@ export function ModernTemplate(p: TemplateProps) {
       {p.whatsappHref && (
         <a
           href={p.whatsappHref} target="_blank" rel="noopener noreferrer" aria-label={t.whatsapp}
-          className="fixed end-5 bottom-5 z-40 grid size-14 place-items-center rounded-full bg-[#25d366] text-white shadow-xl transition hover:scale-105"
+          className="fixed end-5 bottom-5 z-40 hidden size-14 place-items-center rounded-full bg-[#25d366] text-white shadow-xl transition hover:scale-105 md:grid"
         >
           <MessageCircle className="size-7" />
         </a>
       )}
+
+      {/* Phones: the main actions stay one thumb-tap away. */}
+      <div className="h-20 md:hidden" aria-hidden />
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-site-line bg-[color-mix(in_srgb,var(--c-bg)_92%,transparent)] px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl md:hidden">
+        <a href={p.bookHref} className={`${btnPrimary} min-h-12 flex-1 py-3`}><CalendarCheck className="size-5" />{t.book}</a>
+        {p.whatsappHref && (
+          <a href={p.whatsappHref} target="_blank" rel="noopener noreferrer" aria-label={t.whatsapp} className="grid min-h-12 w-12 place-items-center rounded-xl bg-[#25d366] text-white">
+            <MessageCircle className="size-6" />
+          </a>
+        )}
+        {p.telHref && (
+          <a href={p.telHref} aria-label={t.call} className="grid min-h-12 w-12 place-items-center rounded-xl border border-site-line bg-site-card text-site-ink">
+            <Phone className="size-5" />
+          </a>
+        )}
+      </nav>
     </>
   );
 }

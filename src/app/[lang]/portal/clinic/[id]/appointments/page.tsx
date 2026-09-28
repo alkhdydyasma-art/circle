@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { hasLocale } from "@/i18n";
 import { getPortalDictionary } from "@/i18n/portal";
 import { createAppointment } from "@/app/actions/clinic";
@@ -52,7 +52,12 @@ export default async function AppointmentsPage({ params, searchParams }: PagePro
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{t.dash.appt.title}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-semibold">{t.dash.appt.title}</h1>
+          {ctx.frontDesk && !!services?.length && !!doctors?.length && !!branches?.length && (
+            <a href="#new" className="bg-brand-gradient inline-flex min-h-9 items-center gap-1.5 rounded-lg px-3.5 text-sm font-semibold text-white"><Plus className="size-4" />{t.dash.appt.new}</a>
+          )}
+        </div>
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <Link href={link(addDays(week, -7))} className="inline-flex items-center gap-1 rounded-lg border border-line px-3 py-1.5 hover:text-teal">
             <ChevronRight className="size-4 ltr:rotate-180" />{t.dash.appt.prevWeek}
@@ -74,7 +79,12 @@ export default async function AppointmentsPage({ params, searchParams }: PagePro
       )}
 
       <div className="space-y-3">
-        {byDay.map(({ day, items }) => (
+        {byDay.map(({ day, items }) => !items.length && day !== today ? (
+          // Empty days stay visible (so the week reads in order) but take one quiet line.
+          <p key={day} className="flex items-center justify-between rounded-xl border border-dashed border-line px-5 py-2.5 text-sm text-muted">
+            <span>{dayFmt.format(new Date(`${day}T12:00:00Z`))}</span><span>{t.dash.appt.none}</span>
+          </p>
+        ) : (
           <section key={day} className={`rounded-xl border bg-card ${day === today ? "border-teal/50" : "border-line"}`}>
             <h2 className="flex items-center justify-between border-b border-line px-5 py-3 text-sm font-semibold">
               {dayFmt.format(new Date(`${day}T12:00:00Z`))}
@@ -93,7 +103,7 @@ export default async function AppointmentsPage({ params, searchParams }: PagePro
       </div>
 
       {ctx.frontDesk && !!services?.length && !!doctors?.length && !!branches?.length && (
-        <Card title={t.dash.appt.new}>
+        <div id="new" className="scroll-mt-20"><Card title={t.dash.appt.new}>
           <ActionForm action={createAppointment} hidden={{ lang, clinicId: id }} messages={m} submitLabel={t.dash.appt.create}>
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label={t.dash.appt.patientName}><input required name="name" minLength={2} maxLength={120} className={inputCls} /></Field>
@@ -114,7 +124,7 @@ export default async function AppointmentsPage({ params, searchParams }: PagePro
             </div>
             <Field label={t.dash.appt.notes}><input name="notes" maxLength={1000} className={inputCls} /></Field>
           </ActionForm>
-        </Card>
+        </Card></div>
       )}
     </div>
   );

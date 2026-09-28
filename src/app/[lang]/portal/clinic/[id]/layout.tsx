@@ -18,8 +18,8 @@ export default async function ClinicLayout({ children, params }: LayoutProps<"/[
   const items = keys.map((key) => ({ key, label: t.dash.nav[key], href: key === "today" ? base : `${base}/${key}` }));
 
   return (
-    <div className="grid gap-8 md:grid-cols-[13rem_1fr]">
-      <aside className="md:sticky md:top-6 md:h-fit">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[13rem_minmax(0,1fr)] md:gap-8">
+      <aside className="max-md:contents md:sticky md:top-6 md:h-fit">
         <div className="mb-4 px-1">
           <p className="truncate font-semibold">{ctx.clinic.name}</p>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
