@@ -113,6 +113,9 @@ env_default "$E" N8N_WEBHOOK_SECRET "$(rand_hex 24)"
 env_default "$E" N8N_BOOKING_WEBHOOK_URL ""
 env_default "$E" N8N_LEAD_WEBHOOK_URL ""
 env_default "$E" WHATSAPP_PHONE_NUMBER_ID ""
+env_default "$E" WHATSAPP_VERIFY_TOKEN "$(rand_hex 16)"
+env_default "$E" WHATSAPP_APP_SECRET ""
+env_default "$E" ANTHROPIC_API_KEY ""
 chmod 600 "$E"
 
 # ── 4. Start ─────────────────────────────────────────────────────────────────

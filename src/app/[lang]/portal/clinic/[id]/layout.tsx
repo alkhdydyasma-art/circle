@@ -3,6 +3,7 @@ import { ExternalLink } from "lucide-react";
 import { hasLocale } from "@/i18n";
 import { getPortalDictionary } from "@/i18n/portal";
 import { getClinicContext } from "@/lib/clinic-context";
+import { createClient } from "@/lib/supabase/server";
 import { ClinicNav, type NavKey } from "@/components/portal/ClinicNav";
 import { Badge, statusTone } from "@/components/portal/ui";
 
@@ -14,8 +15,20 @@ export default async function ClinicLayout({ children, params }: LayoutProps<"/[
   const base = `/${lang}/portal/clinic/${id}`;
 
   // Menu mirrors what RLS allows each role to do.
-  const keys: NavKey[] = ["today", "appointments", "patients", ...(ctx.canManage ? (["services", "doctors", "website", "automation", "team"] as const) : [])];
-  const items = keys.map((key) => ({ key, label: t.dash.nav[key], href: key === "today" ? base : `${base}/${key}` }));
+  const keys: NavKey[] = [
+    "today", "appointments", "patients",
+    ...(ctx.frontDesk ? (["conversations"] as const) : []),
+    ...(ctx.canManage ? (["services", "doctors", "website", "automation", "team"] as const) : []),
+  ];
+  // Chats waiting for a person (handed off by the assistant or new while it's off).
+  let waiting = 0;
+  if (ctx.frontDesk) {
+    const { data } = await (await createClient()).from("conversations").select("id").eq("clinic_id", id).eq("needs_attention", true).limit(99);
+    waiting = data?.length ?? 0;
+  }
+  const items = keys.map((key) => ({
+    key, label: t.dash.nav[key], href: key === "today" ? base : `${base}/${key}`, badge: key === "conversations" ? waiting : undefined,
+  }));
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[13rem_minmax(0,1fr)] md:gap-8">

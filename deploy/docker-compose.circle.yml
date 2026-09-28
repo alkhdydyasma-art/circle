@@ -22,6 +22,11 @@ services:
       N8N_BOOKING_WEBHOOK_URL: ${N8N_BOOKING_WEBHOOK_URL:-}
       N8N_LEAD_WEBHOOK_URL: ${N8N_LEAD_WEBHOOK_URL:-}
       N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET}
+      N8N_SEND_WEBHOOK_URL: http://n8n:5678/webhook/circle-send
+      # WhatsApp AI assistant (Claude). AGENT_MODEL / AGENT_EFFORT are optional overrides.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      AGENT_MODEL: ${AGENT_MODEL:-}
+      AGENT_EFFORT: ${AGENT_EFFORT:-}
       TZ: Asia/Riyadh
 
   n8n:
@@ -47,6 +52,10 @@ services:
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
       CIRCLE_URL: http://app:3000
       WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      # Meta webhook: verify token (you choose it) and app secret (signature check).
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-}
+      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
+      NODE_FUNCTION_ALLOW_BUILTIN: crypto
       # Executions contain patient names and phone numbers: keep them for 14 days only.
       EXECUTIONS_DATA_PRUNE: "true"
       EXECUTIONS_DATA_MAX_AGE: 336
