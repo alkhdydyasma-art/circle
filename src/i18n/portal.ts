@@ -117,7 +117,7 @@ const ar = {
     error: "حدث خطأ. حاول مرة ثانية.",
   },
   dash: {
-    nav: { today: "اليوم", appointments: "المواعيد", patients: "المرضى", conversations: "المحادثات", services: "الخدمات", doctors: "الأطباء والدوام", website: "الموقع والهوية", automation: "الأتمتة", team: "الفريق والإعدادات" },
+    nav: { today: "اليوم", schedule: "جدول الأطباء", appointments: "المواعيد", patients: "المرضى", conversations: "المحادثات", services: "الخدمات", doctors: "الأطباء والدوام", website: "الموقع والهوية", automation: "الأتمتة", reports: "التقارير", team: "الفريق والإعدادات" },
     viewSite: "عرض الموقع",
     sure: "متأكد؟ اضغط مرة ثانية", call: "اتصال", whatsapp: "واتساب", noAppointmentsDays: "بدون مواعيد:",
     status: { pending: "بانتظار التأكيد", confirmed: "مؤكد", completed: "تم", cancelled: "ملغي", no_show: "لم يحضر" },
@@ -193,6 +193,22 @@ const ar = {
       knowledge: "قاعدة المعرفة", knowledgeHelp: "معلومات يستخدمها المساعد في إجاباته: التأمين، المواقف، الدفع، العروض، التعليمات قبل وبعد العلاج… الخدمات والأسعار والأطباء والدوام يقرأها تلقائياً.",
       kTitle: "العنوان (مثال: التأمينات المقبولة)", kContent: "المعلومة", add: "إضافة", save: "حفظ", remove: "حذف", limit: "الحد 40 معلومة.",
       privacy: "رسائل المرضى تُعالج بواسطة نموذج Claude من Anthropic لتوليد الرد، وتُحفظ المحادثات 90 يوماً ثم تُحذف.",
+    },
+    schedule: {
+      title: "جدول الأطباء", mine: "جدولي", today: "اليوم", prev: "اليوم السابق", next: "اليوم التالي",
+      off: "إجازة / خارج الدوام", empty: "لا توجد مواعيد في هذا اليوم.", noDoctors: "أضف الأطباء ودوامهم أولاً.",
+      now: "الآن", visits: "مواعيد", live: "يتحدّث تلقائياً كل دقيقة.",
+    },
+    reports: {
+      title: "التقارير", days7: "آخر 7 أيام", days30: "آخر 30 يوماً", days90: "آخر 90 يوماً", month: "هذا الشهر",
+      total: "إجمالي المواعيد", completed: "تمت", noShowRate: "نسبة عدم الحضور", cancelRate: "نسبة الإلغاء",
+      revenue: "الإيراد التقديري", revenueHint: "مجموع أسعار الخدمات للمواعيد المكتملة.", newPatients: "مرضى جدد",
+      byDay: "المواعيد يومياً", missed: "ملغي أو لم يحضر", byDoctor: "حسب الطبيب", byService: "حسب الخدمة", bySource: "مصدر الحجز",
+      doctor: "الطبيب", service: "الخدمة", count: "العدد", whatsapp: "واتساب والمساعد الذكي", chats: "محادثات",
+      handedOff: "حُوّلت للاستقبال", waiting: "تنتظر رد", aiBookings: "حجوزات المساعد",
+      upcoming: "مواعيد الأسبوع القادم", unconfirmed: "غير مؤكدة في الأسبوع القادم",
+      export: "تنزيل CSV", auto: "تقرير أسبوعي تلقائي", autoHelp: "فعّل سير عمل «التقرير الأسبوعي» في n8n ليصلك ملخص كل أحد صباحاً على واتساب — أرقام فقط بدون بيانات المرضى.",
+      none: "لا توجد بيانات في هذه الفترة.", sar: "ر.س",
     },
     inbox: {
       title: "المحادثات", empty: "لا توجد محادثات بعد. تظهر هنا رسائل المرضى على واتساب العيادة.",
@@ -336,7 +352,7 @@ const en: PortalDictionary = {
     error: "Something went wrong. Please try again.",
   },
   dash: {
-    nav: { today: "Today", appointments: "Appointments", patients: "Patients", conversations: "Conversations", services: "Services", doctors: "Doctors & hours", website: "Website & brand", automation: "Automation", team: "Team & settings" },
+    nav: { today: "Today", schedule: "Doctors' board", appointments: "Appointments", patients: "Patients", conversations: "Conversations", services: "Services", doctors: "Doctors & hours", website: "Website & brand", automation: "Automation", reports: "Reports", team: "Team & settings" },
     viewSite: "View site",
     sure: "Sure? Tap again", call: "Call", whatsapp: "WhatsApp", noAppointmentsDays: "No appointments:",
     status: { pending: "Pending", confirmed: "Confirmed", completed: "Completed", cancelled: "Cancelled", no_show: "No-show" },
@@ -412,6 +428,22 @@ const en: PortalDictionary = {
       knowledge: "Knowledge base", knowledgeHelp: "Facts the assistant uses in its answers: insurance, parking, payment, offers, pre/post-treatment instructions… Services, prices, doctors and hours are read automatically.",
       kTitle: "Title (e.g. Accepted insurance)", kContent: "Information", add: "Add", save: "Save", remove: "Delete", limit: "Up to 40 entries.",
       privacy: "Patient messages are processed by Anthropic's Claude model to generate replies; conversations are kept for 90 days, then deleted.",
+    },
+    schedule: {
+      title: "Doctors' board", mine: "My schedule", today: "Today", prev: "Previous day", next: "Next day",
+      off: "Off / outside hours", empty: "No appointments on this day.", noDoctors: "Add doctors and their hours first.",
+      now: "Now", visits: "visits", live: "Refreshes every minute.",
+    },
+    reports: {
+      title: "Reports", days7: "Last 7 days", days30: "Last 30 days", days90: "Last 90 days", month: "This month",
+      total: "Appointments", completed: "Completed", noShowRate: "No-show rate", cancelRate: "Cancellation rate",
+      revenue: "Estimated revenue", revenueHint: "Sum of service prices for completed visits.", newPatients: "New patients",
+      byDay: "Appointments per day", missed: "Cancelled or no-show", byDoctor: "By doctor", byService: "By service", bySource: "Booking source",
+      doctor: "Doctor", service: "Service", count: "Count", whatsapp: "WhatsApp & AI assistant", chats: "Conversations",
+      handedOff: "Handed to front desk", waiting: "Waiting for reply", aiBookings: "Assistant bookings",
+      upcoming: "Appointments in the next 7 days", unconfirmed: "Unconfirmed in the next 7 days",
+      export: "Download CSV", auto: "Automatic weekly report", autoHelp: "Turn on the “Weekly report” n8n workflow to get a summary every Sunday morning on WhatsApp — numbers only, no patient data.",
+      none: "No data for this period.", sar: "SAR",
     },
     inbox: {
       title: "Conversations", empty: "No conversations yet. Patients' WhatsApp messages to the clinic appear here.",

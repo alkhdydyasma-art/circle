@@ -310,6 +310,7 @@ end $$;
 
 -- clinic_sites rows are created by trigger only.
 drop policy if exists "clinic_sites: managers write" on public.clinic_sites;
+drop policy if exists "clinic_sites: managers update" on public.clinic_sites;
 create policy "clinic_sites: managers update" on public.clinic_sites for update to authenticated
   using (public.can_manage_clinic(clinic_id)) with check (public.can_manage_clinic(clinic_id));
 revoke insert, delete on public.clinic_sites from authenticated;

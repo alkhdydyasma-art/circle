@@ -26,6 +26,7 @@ const ENDPOINTS = [
   ["POST", "/api/v1/appointments/{id}/cancel", "{ phone }"],
   ["GET", "/api/v1/reminders", "due reminders + message + link"],
   ["POST", "/api/v1/reminders/{id}/sent", "mark as sent"],
+  ["GET", "/api/v1/reports?days=7", "summary + ready WhatsApp message"],
 ] as const;
 
 export default async function AutomationPage({ params }: PageProps<"/[lang]/portal/clinic/[id]/automation">) {

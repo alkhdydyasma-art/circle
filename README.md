@@ -35,7 +35,8 @@ updates, encrypted backups, restore, monitoring). Don't use hosted services outs
 ## Database
 
 Run `supabase/setup.sql` (all migrations concatenated) in the SQL Editor, or the files in
-`supabase/migrations/` in order.
+`supabase/migrations/` in order. Upgrading an existing database: run only the migrations added since
+(every migration is safe to re-run).
 
 Then in Supabase:
 
@@ -55,6 +56,11 @@ Then in Supabase:
   invitation link to send on WhatsApp), sets status / plan.
 - **Clinic members**: see only their own clinic. Roles: owner, manager, doctor, reception.
   Owners manage everyone; managers manage doctors and reception; doctors and reception are read-only.
+- **Doctors' board** (جدول الأطباء): the day's appointments per doctor on a time axis, with off-hours;
+  a doctor sees only their own column. **Conversations** (المحادثات): WhatsApp chats handled by the AI
+  assistant, with take-over and replies for the front desk. **Reports** (التقارير, owners/managers):
+  KPIs by period, doctor, service and source, CSV export, and an automatic weekly WhatsApp summary.
+  Setup of the WhatsApp assistant and reports: [`n8n/README.md`](n8n/README.md).
 
 ### Security model
 
@@ -111,7 +117,8 @@ WCAG contrast, and `content.sections` can hide services / doctors / branches. Pa
 schema.org `Dentist` data for search engines and are regenerated at most once a minute.
 
 **Demo clinic:** run `supabase/seed/demo_clinic.sql` to get a published sample at `/ar/c/noor`
-(no real patient data) — useful for sales demos.
+(no real patient data) — useful for sales demos. Then `supabase/seed/demo_activity.sql` adds fictional
+patients, six weeks of visits, the coming week and a knowledge base, so the board and reports have data.
 
 ### Online booking (`/ar/c/{slug}/book`)
 

@@ -16,9 +16,9 @@ export default async function ClinicLayout({ children, params }: LayoutProps<"/[
 
   // Menu mirrors what RLS allows each role to do.
   const keys: NavKey[] = [
-    "today", "appointments", "patients",
+    "today", "schedule", "appointments", "patients",
     ...(ctx.frontDesk ? (["conversations"] as const) : []),
-    ...(ctx.canManage ? (["services", "doctors", "website", "automation", "team"] as const) : []),
+    ...(ctx.canManage ? (["reports", "services", "doctors", "website", "automation", "team"] as const) : []),
   ];
   // Chats waiting for a person (handed off by the assistant or new while it's off).
   let waiting = 0;
@@ -27,7 +27,7 @@ export default async function ClinicLayout({ children, params }: LayoutProps<"/[
     waiting = data?.length ?? 0;
   }
   const items = keys.map((key) => ({
-    key, label: t.dash.nav[key], href: key === "today" ? base : `${base}/${key}`, badge: key === "conversations" ? waiting : undefined,
+    key, label: key === "schedule" && !ctx.frontDesk ? t.dash.schedule.mine : t.dash.nav[key], href: key === "today" ? base : `${base}/${key}`, badge: key === "conversations" ? waiting : undefined,
   }));
 
   return (

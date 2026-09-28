@@ -167,5 +167,29 @@ select pg_temp.act_as(null);
 select pg_temp.expect_fail('anon cannot call agent_inbound', $$select public.agent_inbound('111111', '0551111111', null, 'wamid.9', 'x')$$);
 select pg_temp.expect_fail('anon cannot read conversations', $$select count(*) from public.conversations$$);
 
+-- ─── Reports ────────────────────────────────────────────────────────────────
+select pg_temp.act_as('owner@a.sa');
+select pg_temp.expect_eq('owner gets clinic report',
+  $$select (public.clinic_report('c000000a-0000-0000-0000-000000000000', now() - interval '30 days', now() + interval '30 days') -> 'totals' ->> 'total')::int > 0$$, 'true');
+select pg_temp.expect_eq('report carries no phone numbers',
+  $$select public.clinic_report('c000000a-0000-0000-0000-000000000000', now() - interval '30 days', now() + interval '30 days')::text ~ '9665'$$, 'false');
+select pg_temp.expect_fail('report period capped',
+  $$select public.clinic_report('c000000a-0000-0000-0000-000000000000', now() - interval '3 years', now())$$);
+select pg_temp.act_as('reception@a.sa');
+select pg_temp.expect_fail('reception cannot read reports',
+  $$select public.clinic_report('c000000a-0000-0000-0000-000000000000', now() - interval '7 days', now())$$);
+select pg_temp.act_as('doctor@a.sa');
+select pg_temp.expect_fail('doctor cannot read reports',
+  $$select public.clinic_report('c000000a-0000-0000-0000-000000000000', now() - interval '7 days', now())$$);
+select pg_temp.act_as('owner@b.sa');
+select pg_temp.expect_fail('other clinic cannot read reports',
+  $$select public.clinic_report('c000000a-0000-0000-0000-000000000000', now() - interval '7 days', now())$$);
+select pg_temp.expect_fail('report internals not callable',
+  $$select public.report_core('c000000a-0000-0000-0000-000000000000', now() - interval '7 days', now())$$);
+select pg_temp.act_as(null);
+select pg_temp.expect_fail('anon cannot read reports',
+  $$select public.clinic_report('c000000a-0000-0000-0000-000000000000', now() - interval '7 days', now())$$);
+select pg_temp.expect_fail('api report needs a valid key', $$select public.api_report('nope', 7)$$);
+
 reset role;
 do $$ begin raise notice 'ALL AGENT TESTS PASSED'; end $$;

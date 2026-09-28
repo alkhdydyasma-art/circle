@@ -1,0 +1,70 @@
+{
+  "name": "Circle — Weekly report to the clinic owner",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [ { "field": "cronExpression", "expression": "0 7 * * 0" } ] }
+      },
+      "id": "7a1b2c3d-0001-4000-8000-000000000001",
+      "name": "Sunday 7:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "notes": "Uses the n8n instance timezone (GENERIC_TIMEZONE=Asia/Riyadh in the Circle deploy kit)."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "a1", "name": "owner_whatsapp", "value": "9665XXXXXXXX", "type": "string" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7a1b2c3d-0002-4000-8000-000000000002",
+      "name": "Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 0],
+      "notes": "The owner's WhatsApp number, international format without + (e.g. 966551234567)."
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.CIRCLE_URL }}/api/v1/reports?days=7",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "7a1b2c3d-0003-4000-8000-000000000003",
+      "name": "Get weekly summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0],
+      "notes": "Credential: Header Auth — Name: Authorization, Value: Bearer ck_… (the clinic's key from Circle → الأتمتة)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": {{ JSON.stringify($('Settings').item.json.owner_whatsapp) }},\n  \"type\": \"template\",\n  \"template\": {\n    \"name\": \"weekly_report\",\n    \"language\": { \"code\": \"ar\" },\n    \"components\": [\n      { \"type\": \"body\", \"parameters\": {{ JSON.stringify($json.template_params.map(t => ({ type: 'text', text: t }))) }} }\n    ]\n  }\n}",
+        "options": {}
+      },
+      "id": "7a1b2c3d-0004-4000-8000-000000000004",
+      "name": "Send to owner (WhatsApp template)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 0],
+      "notes": "Credential: Header Auth — Name: Authorization, Value: Bearer <Meta access token>. Needs the approved 'weekly_report' template (see n8n/README.md)."
+    }
+  ],
+  "connections": {
+    "Sunday 7:00": { "main": [ [ { "node": "Settings", "type": "main", "index": 0 } ] ] },
+    "Settings": { "main": [ [ { "node": "Get weekly summary", "type": "main", "index": 0 } ] ] },
+    "Get weekly summary": { "main": [ [ { "node": "Send to owner (WhatsApp template)", "type": "main", "index": 0 } ] ] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

@@ -3,9 +3,9 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Globe, LayoutDashboard, MessagesSquare, Settings, Sparkles, Stethoscope, Users, Zap } from "lucide-react";
+import { BarChart3, CalendarDays, Columns3, Globe, LayoutDashboard, MessagesSquare, Settings, Sparkles, Stethoscope, Users, Zap } from "lucide-react";
 
-const ICONS = { today: LayoutDashboard, appointments: CalendarDays, patients: Users, conversations: MessagesSquare, services: Sparkles, doctors: Stethoscope, website: Globe, automation: Zap, team: Settings };
+const ICONS = { today: LayoutDashboard, schedule: Columns3, appointments: CalendarDays, patients: Users, conversations: MessagesSquare, services: Sparkles, doctors: Stethoscope, website: Globe, automation: Zap, reports: BarChart3, team: Settings };
 export type NavKey = keyof typeof ICONS;
 
 export function ClinicNav({ base, items }: { base: string; items: { key: NavKey; label: string; href: string; badge?: number }[] }) {

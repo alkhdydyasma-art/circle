@@ -16,5 +16,5 @@ for test in tests/*_test.sql; do
   done
   echo "── $test"
   "${q[@]}" -t -f "$test" 2>&1 | sed -n 's/.*NOTICE:  //p; /PASSED/p; /ERROR/p; /FAIL/p'
-  psql -qX -c "drop database $db" >/dev/null
+  [ -n "${KEEP_DB:-}" ] || psql -qX -c "drop database $db" >/dev/null
 done

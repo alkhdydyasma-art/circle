@@ -18,6 +18,7 @@ const STATUS: Record<string, number> = {
   invalid_name: 400,
   invalid_notes: 400,
   invalid_source: 400,
+  invalid_period: 400,
 };
 
 export const json = (body: unknown, status = 200) =>
