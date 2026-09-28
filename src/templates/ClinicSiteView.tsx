@@ -3,7 +3,7 @@ import type { PublicSite } from "@/lib/sites";
 import { templates } from ".";
 import { siteFontVariables } from "./fonts";
 import { getSiteStrings } from "./strings";
-import { safeHttpsUrl, themeStyle } from "./theme";
+import { safeImageUrl, themeStyle } from "./theme";
 
 // Renders a clinic website. Shared by the public page and the dashboard preview.
 export function ClinicSiteView({ site, lang }: { site: PublicSite; lang: Locale }) {
@@ -24,10 +24,14 @@ export function ClinicSiteView({ site, lang }: { site: PublicSite; lang: Locale 
         t={t}
         bookHref={`/${lang}/c/${slug}/book`}
         serviceBookHref={(id) => `/${lang}/c/${slug}/book?service=${id}`}
+        doctorBookHref={(id) => `/${lang}/c/${slug}/book?doctor=${id}`}
+        imageUrl={safeImageUrl}
+        cases={(site.site.content.cases ?? []).filter((c) => safeImageUrl(c.before) && safeImageUrl(c.after))}
+        remindersEnabled={site.site.reminders_enabled ?? false}
         whatsappHref={whatsappHref}
         telHref={telHref}
-        logoUrl={safeHttpsUrl(brand.logo_url)}
-        heroImageUrl={safeHttpsUrl(brand.hero_image_url)}
+        logoUrl={safeImageUrl(brand.logo_url)}
+        heroImageUrl={safeImageUrl(brand.hero_image_url)}
         show={{ services: sections.services !== false, doctors: sections.doctors !== false, branches: sections.branches !== false }}
         formatPrice={(v) => price.format(v)}
         occasion={site.site.template === "modern" ? undefined : site.site.template}

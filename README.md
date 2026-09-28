@@ -160,6 +160,14 @@ blocked by the same exclusion constraint as online booking. Draft previews live 
 PGHOST=localhost PGUSER=postgres supabase/tests/run.sh
 ```
 
+## Clinic images
+
+Logos, hero images, doctor photos and before/after cases are uploaded from the dashboard
+(**الموقع والهوية**, **الأطباء والدوام**). The browser shrinks photos, then a server action checks
+the user may manage the clinic, identifies the file from its bytes (PNG/JPEG/WebP, max 3 MB) and
+stores it in the public Storage bucket `clinic-media` under `<clinic id>/…` with the service key.
+Migration `20260930000000_media.sql` creates the bucket. Demo images live in `public/demo`.
+
 ## Legal pages
 
 `/ar/privacy` and `/ar/terms` (`src/legal/content.ts`) are a **draft that needs lawyer review**. Fill in

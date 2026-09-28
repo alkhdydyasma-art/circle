@@ -127,6 +127,9 @@ h1, h2, h3 {
 @theme inline {
   --color-site-bg: var(--c-bg);
   --color-site-surface: var(--c-surface);
+  --color-site-card: var(--c-card);
+  --color-site-deep: var(--c-deep);
+  --color-site-deep-fg: var(--c-deep-fg);
   --color-site-ink: var(--c-ink);
   --color-site-muted: var(--c-muted);
   --color-site-line: var(--c-line);
@@ -150,3 +153,11 @@ html:has(.clinic-site),
 body:has(.clinic-site) {
   background: transparent; /* the clinic wrapper paints its own background */
 }
+
+/* Clinic sites: floating hero artwork (disabled by the reduced-motion rule above). */
+@keyframes site-float {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-12px) rotate(2deg); }
+}
+.site-float { animation: site-float 6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .site-float { animation: none; } }

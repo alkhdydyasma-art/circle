@@ -7,13 +7,15 @@ import { getClinicContext } from "@/lib/clinic-context";
 import { createClient } from "@/lib/supabase/server";
 import { ActionForm, Field } from "@/components/portal/ActionForm";
 import { Badge, Card, inputCls } from "@/components/portal/ui";
+import { MediaUpload } from "@/components/portal/MediaUpload";
+import { CaseManager, type CaseItem } from "@/components/portal/CaseManager";
 import { FONTS } from "@/templates/fonts";
-import { TEMPLATES, safeColor } from "@/templates/theme";
+import { TEMPLATES, safeColor, safeImageUrl } from "@/templates/theme";
 
 type Site = {
   slug: string; published: boolean; template: string;
   brand: { primary?: string; accent?: string; font?: string; logo_url?: string; hero_image_url?: string };
-  content: { tagline?: string; about?: string; sections?: Record<string, boolean> };
+  content: { tagline?: string; about?: string; sections?: Record<string, boolean>; cases?: CaseItem[] };
   phone: string | null; whatsapp: string | null; email: string | null;
   slot_minutes: number; booking_days_ahead: number; min_notice_minutes: number;
 };
@@ -59,6 +61,19 @@ export default async function WebsitePage({ params }: PageProps<"/[lang]/portal/
         </div>
       </Card>
 
+      <Card title={t.dash.media.images}>
+        <div className="grid gap-6 md:grid-cols-[auto_1fr]">
+          <MediaUpload clinicId={id} lang={lang} kind="logo" label={w.logo} hint={t.dash.media.logoHint} current={safeImageUrl(site.brand.logo_url)} maxSide={600} shape="square" s={t.dash.media} />
+          <MediaUpload clinicId={id} lang={lang} kind="hero" label={w.hero} hint={t.dash.media.heroHint} current={safeImageUrl(site.brand.hero_image_url)} maxSide={1920} s={t.dash.media} />
+        </div>
+      </Card>
+
+      <Card title={t.dash.media.cases}>
+        <p className="mb-4 text-sm text-muted">{t.dash.media.casesHint}</p>
+        <CaseManager clinicId={id} lang={lang} s={t.dash.media}
+          cases={(site.content.cases ?? []).filter((c) => safeImageUrl(c.before) && safeImageUrl(c.after))} />
+      </Card>
+
       <ActionForm version={JSON.stringify(site)} action={saveSite} hidden={{ lang, clinicId: id }} messages={m} submitLabel={w.save} className="space-y-6">
         <Card title={w.template}>
           <div className="grid gap-3 sm:grid-cols-3">
@@ -77,8 +92,6 @@ export default async function WebsitePage({ params }: PageProps<"/[lang]/portal/
                 {(Object.keys(FONTS) as (keyof typeof FONTS)[]).map((f) => <option key={f} value={f}>{FONT_LABELS[f]}</option>)}
               </select>
             </Field>
-            <Field label={w.logo} className="sm:col-span-3"><input name="logo_url" type="url" dir="ltr" defaultValue={site.brand.logo_url ?? ""} placeholder="https://" className={inputCls} /></Field>
-            <Field label={w.hero} className="sm:col-span-3"><input name="hero_image_url" type="url" dir="ltr" defaultValue={site.brand.hero_image_url ?? ""} placeholder="https://" className={inputCls} /></Field>
           </div>
         </Card>
 

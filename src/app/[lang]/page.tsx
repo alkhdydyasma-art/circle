@@ -6,6 +6,7 @@ import { Features } from "@/components/Features";
 import { HowItWorks } from "@/components/HowItWorks";
 import { BeforeAfter } from "@/components/BeforeAfter";
 import { DashboardPreview } from "@/components/DashboardPreview";
+import { TemplatesShowcase } from "@/components/TemplatesShowcase";
 import { LeadSection } from "@/components/LeadSection";
 import { Testimonials } from "@/components/Testimonials";
 import { Faq } from "@/components/Faq";
@@ -26,6 +27,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         <HowItWorks t={t} />
         <BeforeAfter t={t} />
         <DashboardPreview t={t} />
+        <TemplatesShowcase t={t} lang={lang} />
         <Testimonials t={t} />
         <LeadSection lang={lang} t={t} />
         <Faq t={t} />

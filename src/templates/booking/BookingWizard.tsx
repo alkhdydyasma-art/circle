@@ -21,11 +21,13 @@ type Props = {
   doctors: Doctor[];
   branches: Branch[];
   initialServiceId?: string;
+  /** Set by "Book with this doctor": only their services are offered and they're preselected. */
+  initialDoctorId?: string;
   whatsappHref?: string;
   remindersEnabled?: boolean;
 };
 
-const card = "rounded-2xl border border-site-line bg-site-bg p-4 text-start transition hover:border-site-primary";
+const card = "rounded-2xl border border-site-line bg-site-card p-4 text-start shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition hover:-translate-y-0.5 hover:border-site-primary hover:shadow-[0_14px_34px_-20px_rgb(0_0_0/0.35)]";
 const selected = "border-site-primary ring-2 ring-[color-mix(in_srgb,var(--c-primary)_25%,transparent)]";
 const input = "w-full rounded-xl border border-site-line bg-site-bg px-4 py-3 outline-none transition focus:border-site-primary focus:ring-4 focus:ring-[color-mix(in_srgb,var(--c-primary)_15%,transparent)]";
 const btn = "inline-flex items-center justify-center gap-2 rounded-full bg-site-primary px-6 py-3 font-semibold text-site-primary-fg transition hover:brightness-110 disabled:opacity-50";
@@ -48,14 +50,17 @@ function icsHref(b: Booked, durationMin: number, clinic: string) {
 export function BookingWizard(p: Props) {
   const t = p.t.booking;
   const locale = p.lang === "ar" ? "ar-SA-u-nu-latn-ca-gregory" : "en-GB";
+  const price = useMemo(() => new Intl.NumberFormat(p.lang === "ar" ? "ar-SA-u-nu-latn" : "en-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 }), [p.lang]);
   const fmtDay = useMemo(() => new Intl.DateTimeFormat(locale, { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" }), [locale]);
   const fmtTime = useMemo(() => new Intl.DateTimeFormat(locale, { timeZone: p.timezone, hour: "numeric", minute: "2-digit" }), [locale, p.timezone]);
   const fmtFull = useMemo(() => new Intl.DateTimeFormat(locale, { timeZone: p.timezone, weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit" }), [locale, p.timezone]);
 
-  const initial = p.services.some((s) => s.id === p.initialServiceId) ? p.initialServiceId! : null;
-  const [step, setStep] = useState(initial ? 1 : 0);
+  const presetDoctor = p.doctors.find((d) => d.id === p.initialDoctorId) ?? null;
+  const offered = presetDoctor ? p.services.filter((s) => presetDoctor.service_ids.includes(s.id)) : p.services;
+  const initial = offered.some((s) => s.id === p.initialServiceId) ? p.initialServiceId! : null;
+  const [step, setStep] = useState(initial ? (presetDoctor ? 2 : 1) : 0);
   const [serviceId, setServiceId] = useState<string | null>(initial);
-  const [doctorId, setDoctorId] = useState<string>("any");
+  const [doctorId, setDoctorId] = useState<string>(presetDoctor?.id ?? "any");
   // Availability is cached per query; `reload` bumps after a lost race to refetch.
   const [avail, setAvail] = useState<{ key: string; days: Record<string, Slot[]> } | null>(null);
   const [reload, setReload] = useState(0);
@@ -182,16 +187,23 @@ export function BookingWizard(p: Props) {
       {step === 0 && (
         <section>
           <h2 className="mb-5 text-2xl font-bold">{t.chooseService}</h2>
+          {presetDoctor && (
+            <p className="-mt-2 mb-4 flex items-center gap-2 text-sm text-site-muted"><Stethoscope className="size-4 text-site-primary" />{t.with} {presetDoctor.full_name}</p>
+          )}
           <div className="grid gap-3 sm:grid-cols-2">
-            {p.services.map((s) => (
+            {offered.map((s) => (
               <button
                 key={s.id}
                 type="button"
-                onClick={() => { setServiceId(s.id); setDoctorId("any"); setError(null); setStep(1); }}
+                onClick={() => { setServiceId(s.id); setDoctorId(presetDoctor?.id ?? "any"); setError(null); setStep(presetDoctor ? 2 : 1); }}
                 className={`${card} ${serviceId === s.id ? selected : ""}`}
               >
-                <span className="block font-semibold">{s.name}</span>
-                <span className="mt-1 flex items-center gap-1.5 text-sm text-site-muted">
+                <span className="flex items-start justify-between gap-3">
+                  <span className="font-semibold">{s.name}</span>
+                  {s.price != null && <span className="shrink-0 text-sm font-bold text-site-primary">{price.format(s.price)}</span>}
+                </span>
+                {s.description && <span className="mt-1.5 block text-sm leading-6 text-site-muted">{s.description}</span>}
+                <span className="mt-2 flex items-center gap-1.5 text-sm text-site-muted">
                   <Clock className="size-3.5" /> {s.duration_minutes} {p.t.services.minutes}
                 </span>
               </button>

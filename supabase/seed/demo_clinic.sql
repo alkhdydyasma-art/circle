@@ -1,6 +1,6 @@
 -- Demo clinic for sales demos and local development: "عيادة النور لطب الأسنان" at /ar/c/noor.
 -- Idempotent: re-running resets the demo clinic's configuration. Run as a privileged user
--- (Supabase SQL Editor). Contains no real patient data.
+-- (Supabase SQL Editor). Contains no real patient data. Photos are illustrative demo images (public/demo).
 
 do $$
 declare
@@ -23,11 +23,15 @@ begin
 
   update public.clinic_sites set
     slug = 'noor', published = true, template = 'modern',
-    brand = '{"primary": "#0e7490", "accent": "#14b8a6", "font": "tajawal"}',
+    brand = '{"primary": "#0e7490", "accent": "#14b8a6", "font": "tajawal", "hero_image_url": "/demo/clinic-hero.webp"}',
     content = '{
       "tagline": "ابتسامتك تستحق رعاية هادئة ودقيقة",
       "about": "فريق من أطباء الأسنان الاستشاريين في جدة، نقدم رعاية شاملة للعائلة من الفحص الدوري حتى التجميل والزراعة، بأجهزة حديثة ومواعيد تحترم وقتك.",
-      "sections": {"services": true, "doctors": true, "branches": true}
+      "sections": {"services": true, "doctors": true, "branches": true},
+      "cases": [
+        {"id": "demo-veneers", "title": "تلبيسات خزفية: من اصفرار وتكسّر إلى ابتسامة طبيعية متناسقة", "before": "/demo/veneers-before.webp", "after": "/demo/veneers-after.webp"},
+        {"id": "demo-ortho", "title": "تقويم أطفال: من تزاحم واضح إلى اصطفاف صحي ومتوازن", "before": "/demo/ortho-before.webp", "after": "/demo/ortho-after.webp"}
+      ]
     }',
     phone = '0126000000', whatsapp = '+966530689203', email = 'hello@noor-dental.example',
     slot_minutes = 30, booking_days_ahead = 30, min_notice_minutes = 120
@@ -51,12 +55,12 @@ begin
   on conflict (id) do update set name = excluded.name, description = excluded.description,
     duration_minutes = excluded.duration_minutes, price = excluded.price, sort = excluded.sort;
 
-  insert into public.doctors (id, clinic_id, full_name, title, specialty, bio, sort) values
-    (v_sara, v_clinic, 'د. سارة الغامدي', 'استشارية', 'تجميل الأسنان', 'زمالة في طب الأسنان التجميلي، 12 سنة خبرة في الابتسامة الهوليودية والتبييض.', 1),
-    (v_fahad, v_clinic, 'د. فهد العتيبي', 'استشاري', 'زراعة الأسنان', 'متخصص في الزراعة الفورية وتعويض الأسنان المفقودة.', 2),
-    (v_reem, v_clinic, 'د. ريم الحربي', 'أخصائية', 'تقويم الأسنان', 'خبرة واسعة في التقويم الشفاف للبالغين والمراهقين.', 3)
+  insert into public.doctors (id, clinic_id, full_name, title, specialty, bio, photo_url, sort) values
+    (v_sara, v_clinic, 'د. سارة الغامدي', 'استشارية', 'تجميل الأسنان', 'زمالة في طب الأسنان التجميلي، 12 سنة خبرة في الابتسامة الهوليودية والتبييض.', '/demo/doctor-2.webp', 1),
+    (v_fahad, v_clinic, 'د. فهد العتيبي', 'استشاري', 'زراعة الأسنان', 'متخصص في الزراعة الفورية وتعويض الأسنان المفقودة.', '/demo/doctor-1.webp', 2),
+    (v_reem, v_clinic, 'د. عبدالله الحربي', 'أخصائي', 'تقويم الأسنان', 'خبرة واسعة في التقويم الشفاف للبالغين والمراهقين.', '/demo/doctor-3.webp', 3)
   on conflict (id) do update set full_name = excluded.full_name, title = excluded.title,
-    specialty = excluded.specialty, bio = excluded.bio;
+    specialty = excluded.specialty, bio = excluded.bio, photo_url = excluded.photo_url;
 
   insert into public.doctor_services (clinic_id, doctor_id, service_id) values
     (v_clinic, v_sara, s_exam), (v_clinic, v_sara, s_clean), (v_clinic, v_sara, s_fill), (v_clinic, v_sara, s_white),

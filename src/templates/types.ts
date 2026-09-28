@@ -12,6 +12,12 @@ export type TemplateProps = {
   bookHref: string;
   /** Booking link preselecting one service. */
   serviceBookHref: (serviceId: string) => string;
+  /** Booking link preselecting one doctor. */
+  doctorBookHref: (doctorId: string) => string;
+  /** Validated image URL (uploaded file or bundled demo image), or undefined. */
+  imageUrl: (value: unknown) => string | undefined;
+  cases: { id: string; title: string; before: string; after: string }[];
+  remindersEnabled: boolean;
   whatsappHref?: string;
   telHref?: string;
   logoUrl?: string;

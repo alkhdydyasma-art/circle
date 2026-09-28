@@ -109,6 +109,13 @@ const en: Dictionary = {
       "Reception free to care for patients",
     ],
   },
+  showcase: {
+    eyebrow: "Clinic websites",
+    title: "A professional website in your clinic's own brand",
+    subtitle: "Every clinic gets a ready website with services, doctors, before/after results and instant booking — and a festive look for national occasions in one click.",
+    items: [["Modern", "Your logo and colours"], ["Founding Day", "Najdi Sadu and crenellations"], ["National Day", "Celebratory green and gold"]],
+    demo: "See a demo clinic website",
+  },
   dashboard: {
     eyebrow: "Dashboard",
     title: "Your whole clinic on one screen",

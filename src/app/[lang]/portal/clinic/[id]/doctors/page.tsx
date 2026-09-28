@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/server";
 import { ActionForm, Field } from "@/components/portal/ActionForm";
 import { HoursEditor } from "@/components/portal/HoursEditor";
 import { Card, inputCls } from "@/components/portal/ui";
+import { MediaUpload } from "@/components/portal/MediaUpload";
+import { safeImageUrl } from "@/templates/theme";
 
 type Doctor = { id: string; full_name: string; title: string | null; specialty: string | null; bio: string | null; photo_url: string | null; user_id: string | null; is_active: boolean };
 type Branch = { id: string; name: string; city: string | null; address: string | null; phone: string | null; maps_url: string | null; is_active: boolean };
@@ -23,7 +25,6 @@ function DoctorFields({ d, t, services, linked, members }: { d?: Doctor; t: Dict
       </div>
       <Field label={t.bio}><input name="bio" maxLength={1000} defaultValue={d?.bio ?? ""} className={inputCls} /></Field>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label={t.photo}><input name="photo_url" type="url" dir="ltr" defaultValue={d?.photo_url ?? ""} placeholder="https://" className={inputCls} /></Field>
         <Field label={t.account}>
           <select name="user_id" defaultValue={d?.user_id ?? ""} className={inputCls}>
             <option value="">{t.noAccount}</option>
@@ -74,6 +75,9 @@ export default async function DoctorsPage({ params }: PageProps<"/[lang]/portal/
 
       {(doctors ?? []).map((d) => (
         <Card key={d.id} title={d.full_name}>
+          <div className="mb-5 border-b border-line pb-5">
+            <MediaUpload clinicId={id} lang={lang} kind="doctor" doctorId={d.id} label={dt.photo} current={safeImageUrl(d.photo_url)} maxSide={900} shape="round" s={t.dash.media} />
+          </div>
           <ActionForm version={JSON.stringify([d, [...linkedOf(d.id)]])} action={saveDoctor} hidden={{ lang, clinicId: id, id: d.id }} messages={m} submitLabel={dt.save}>
             <DoctorFields d={d} t={dt} services={services ?? []} linked={linkedOf(d.id)} members={doctorMembers} />
           </ActionForm>

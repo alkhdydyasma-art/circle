@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- clinic logo is an uploaded file */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -7,7 +8,7 @@ import { getPublicSite } from "@/lib/sites";
 import { BookingWizard } from "@/templates/booking/BookingWizard";
 import { siteFontVariables } from "@/templates/fonts";
 import { getSiteStrings } from "@/templates/strings";
-import { themeStyle } from "@/templates/theme";
+import { safeImageUrl, themeStyle } from "@/templates/theme";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/c/[slug]/book">): Promise<Metadata> {
   const { lang, slug } = await params;
@@ -23,7 +24,8 @@ export default async function BookPage({ params, searchParams }: PageProps<"/[la
   const site = await getPublicSite(slug);
   if (!site) notFound();
   const t = getSiteStrings(lang);
-  const service = (await searchParams).service;
+  const { service, doctor } = await searchParams;
+  const logo = safeImageUrl(site.site.brand.logo_url);
 
   return (
     <div className={`clinic-site min-h-screen ${siteFontVariables}`} style={themeStyle(site.site.template, site.site.brand)}>
@@ -33,7 +35,10 @@ export default async function BookPage({ params, searchParams }: PageProps<"/[la
             <ChevronRight className="size-4 ltr:rotate-180" />
             {t.booking.back}
           </Link>
-          <span className="truncate font-bold">{site.clinic.name}</span>
+          <span className="flex min-w-0 items-center gap-2.5">
+            {logo && <img src={logo} alt="" className="h-9 w-auto max-w-28 object-contain" />}
+            <span className="truncate font-bold">{site.clinic.name}</span>
+          </span>
         </div>
       </header>
       <main className="px-5 py-10 md:py-14">
@@ -48,6 +53,7 @@ export default async function BookPage({ params, searchParams }: PageProps<"/[la
           doctors={site.doctors}
           branches={site.branches}
           initialServiceId={typeof service === "string" ? service : undefined}
+          initialDoctorId={typeof doctor === "string" ? doctor : undefined}
           whatsappHref={site.site.whatsapp ? `https://wa.me/${site.site.whatsapp.slice(1)}` : undefined}
           remindersEnabled={site.site.reminders_enabled ?? false}
         />

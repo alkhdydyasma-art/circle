@@ -178,18 +178,17 @@ export async function saveDoctor(_: FormState, fd: FormData): Promise<FormState>
     title: z.string().trim().max(80).optional(),
     specialty: z.string().trim().max(120).optional(),
     bio: z.string().trim().max(1000).optional(),
-    photo_url: z.string().trim().url().startsWith("https://").max(500).optional(),
     user_id: uuid.optional(),
     is_active: z.boolean(),
     services: z.array(uuid),
   }).safeParse({
     id: opt(fd.get("id")), clinicId: fd.get("clinicId"), full_name: fd.get("full_name"), title: opt(fd.get("title")),
-    specialty: opt(fd.get("specialty")), bio: opt(fd.get("bio")), photo_url: opt(fd.get("photo_url")), user_id: opt(fd.get("user_id")),
+    specialty: opt(fd.get("specialty")), bio: opt(fd.get("bio")), user_id: opt(fd.get("user_id")),
     is_active: fd.get("is_active") === "on", services: fd.getAll("services").map(String),
   });
   if (!p.success) return { error: "invalid" };
   const { id, clinicId, services, ...f } = p.data;
-  const row = { ...f, title: f.title ?? null, specialty: f.specialty ?? null, bio: f.bio ?? null, photo_url: f.photo_url ?? null, user_id: f.user_id ?? null };
+  const row = { ...f, title: f.title ?? null, specialty: f.specialty ?? null, bio: f.bio ?? null, user_id: f.user_id ?? null };
   const supabase = await createClient();
 
   let doctorId = id;
@@ -263,7 +262,6 @@ export async function saveBranch(_: FormState, fd: FormData): Promise<FormState>
 
 // ─── Website ─────────────────────────────────────────────────────────────────
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/);
-const https = z.string().trim().url().startsWith("https://").max(500);
 
 export async function saveSite(_: FormState, fd: FormData): Promise<FormState> {
   const p = z.object({
@@ -272,7 +270,6 @@ export async function saveSite(_: FormState, fd: FormData): Promise<FormState> {
     template: z.enum(TEMPLATES),
     primary: hex, accent: hex,
     font: z.enum(Object.keys(FONTS) as [keyof typeof FONTS, ...(keyof typeof FONTS)[]]),
-    logo_url: https.optional(), hero_image_url: https.optional(),
     tagline: z.string().trim().max(160).optional(),
     about: z.string().trim().max(1200).optional(),
     sections: z.object({ services: z.boolean(), doctors: z.boolean(), branches: z.boolean() }),
@@ -285,7 +282,6 @@ export async function saveSite(_: FormState, fd: FormData): Promise<FormState> {
   }).safeParse({
     clinicId: fd.get("clinicId"), slug: fd.get("slug"), template: fd.get("template"),
     primary: fd.get("primary"), accent: fd.get("accent"), font: fd.get("font"),
-    logo_url: opt(fd.get("logo_url")), hero_image_url: opt(fd.get("hero_image_url")),
     tagline: opt(fd.get("tagline")), about: opt(fd.get("about")),
     sections: { services: fd.get("s_services") === "on", doctors: fd.get("s_doctors") === "on", branches: fd.get("s_branches") === "on" },
     phone: opt(fd.get("phone")), whatsapp: opt(fd.get("whatsapp")), email: opt(fd.get("email")),
@@ -294,11 +290,13 @@ export async function saveSite(_: FormState, fd: FormData): Promise<FormState> {
   if (!p.success) return { error: "invalid" };
   const d = p.data;
   const supabase = await createClient();
-  const { data: before } = await supabase.from("clinic_sites").select("slug").eq("clinic_id", d.clinicId).single();
+  // Uploaded images and before/after cases are managed by the media actions: keep them.
+  const { data: before } = await supabase.from("clinic_sites").select("slug, brand, content").eq("clinic_id", d.clinicId)
+    .single<{ slug: string; brand: Record<string, unknown>; content: Record<string, unknown> }>();
   const { data, error } = await supabase.from("clinic_sites").update({
     slug: d.slug, template: d.template,
-    brand: { primary: d.primary, accent: d.accent, font: d.font, ...(d.logo_url && { logo_url: d.logo_url }), ...(d.hero_image_url && { hero_image_url: d.hero_image_url }) },
-    content: { ...(d.tagline && { tagline: d.tagline }), ...(d.about && { about: d.about }), sections: d.sections },
+    brand: { logo_url: before?.brand.logo_url, hero_image_url: before?.brand.hero_image_url, primary: d.primary, accent: d.accent, font: d.font },
+    content: { cases: before?.content.cases, ...(d.tagline && { tagline: d.tagline }), ...(d.about && { about: d.about }), sections: d.sections },
     phone: d.phone ?? null, whatsapp: d.whatsapp ?? null, email: d.email ?? null,
     slot_minutes: d.slot_minutes, booking_days_ahead: d.booking_days_ahead, min_notice_minutes: d.min_notice_minutes,
   }).eq("clinic_id", d.clinicId).select("clinic_id");

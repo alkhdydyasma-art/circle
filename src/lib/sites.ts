@@ -18,6 +18,8 @@ const siteSchema = z.object({
         tagline: z.string().max(160).optional().catch(undefined),
         about: z.string().max(1200).optional().catch(undefined),
         sections: z.record(z.string(), z.boolean()).optional().catch(undefined),
+        cases: z.array(z.object({ id: z.string(), title: z.string().max(120), before: z.string(), after: z.string() }))
+          .max(6).optional().catch(undefined),
       })
       .catch({}),
     phone: z.string().nullable(),

@@ -11,6 +11,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   output: "standalone", // self-contained server for the Docker image (see Dockerfile)
+  // Image uploads (logos, photos, before/after) go through server actions; the browser
+  // shrinks them first, so 4 MB (under Vercel's 4.5 MB request cap) is plenty.
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
   async redirects() {
     return [{ source: "/", destination: "/ar", permanent: false }];
   },
