@@ -21,8 +21,9 @@ export const harden = (options: CookieOptions): CookieOptions => ({
 });
 
 export function supabaseEnv() {
-  const url = process.env.SUPABASE_URL;
-  const anonKey = process.env.SUPABASE_ANON_KEY;
+  // Accept the URL however it was pasted ("…supabase.co/", "…/rest/v1/"): the client adds the paths.
+  const url = process.env.SUPABASE_URL?.trim().replace(/\/+$/, "").replace(/\/(rest|auth)\/v1$/, "");
+  const anonKey = process.env.SUPABASE_ANON_KEY?.trim();
   if (!url || !anonKey) throw new Error("SUPABASE_URL and SUPABASE_ANON_KEY must be set");
   return { url, anonKey };
 }

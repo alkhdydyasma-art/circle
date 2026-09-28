@@ -35,7 +35,7 @@ export const getUser = cache(async () => {
 // (creating an invited user's account). Never pass its results to the browser as-is.
 export function createServiceClient() {
   const { url } = supabaseEnv();
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   if (!key) throw new Error("SUPABASE_SERVICE_ROLE_KEY must be set");
   return createAdminClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }

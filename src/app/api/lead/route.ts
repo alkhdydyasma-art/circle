@@ -1,14 +1,15 @@
 import { leadSchema, type Lead } from "@/lib/lead-schema";
 import { allowRequest, tooMany } from "@/lib/rate-limit";
+import { supabaseEnv } from "@/lib/supabase/cookies";
 
 // Demo requests: validated here, stored in Supabase with the server-only service
 // role key (the table has RLS with no public policies), then optionally announced
 // to n8n for WhatsApp follow-up. See README for the environment variables.
 
 async function storeInSupabase(lead: Lead) {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) return false;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!process.env.SUPABASE_URL || !key) return false;
+  const { url } = supabaseEnv();
 
   const res = await fetch(`${url}/rest/v1/leads`, {
     method: "POST",
