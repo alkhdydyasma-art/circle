@@ -1,0 +1,55 @@
+{
+  "name": "Circle — Error reporter",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "8d000001-0000-4000-8000-000000000001",
+      "name": "On workflow error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.CIRCLE_URL }}/api/ops/report",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 60000
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ workflow: $json.workflow.name, node: $json.execution.lastNodeExecuted, message: String($json.execution.error?.message ?? 'unknown error').slice(0, 1500) }) }}"
+      },
+      "id": "8d000001-0000-4000-8000-000000000002",
+      "name": "Report to Circle",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "notes": "Set this workflow as the Error Workflow of every Circle workflow (Workflow settings → Error workflow)."
+    }
+  ],
+  "connections": {
+    "On workflow error": {
+      "main": [
+        [
+          {
+            "node": "Report to Circle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

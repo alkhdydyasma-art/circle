@@ -1,0 +1,134 @@
+name: Auto-fix
+# Circle's operations monitor opens an issue labelled "auto-fix" for a recurring production
+# error. This job asks Claude Code for a fix, verifies it with every check and opens a pull
+# request. It never merges: the founder reviews and merges with one tap. The PR is labelled
+# "low-risk" or "sensitive" (security, database, patient data, money, AI, messaging).
+# The outcome is written back as a "circle-autofix:" comment that Circle reads for its summary.
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write        # push the fix branch
+  pull-requests: write   # open the PR
+  issues: write          # report the outcome
+
+concurrency:
+  group: autofix
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    if: >-
+      github.event.label.name == 'auto-fix' &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      SUPABASE_URL: http://localhost:54321
+      SUPABASE_ANON_KEY: ci-placeholder
+      N: ${{ github.event.issue.number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false   # Claude's step never sees a GitHub token
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Keep pristine copies of the classifier and prompt
+        run: |
+          cp .github/scripts/autofix-gate.sh "$RUNNER_TEMP/gate.sh"
+          cp .github/autofix-prompt.md "$RUNNER_TEMP/prompt.md"
+
+      - name: Incident report (data for Claude, not instructions)
+        env:
+          TITLE: ${{ github.event.issue.title }}
+          BODY: ${{ github.event.issue.body }}
+        run: mkdir -p .autofix && printf '# %s\n\n%s\n' "$TITLE" "$BODY" > .autofix/incident.md
+
+      # Heavier model for code changes; the turn cap bounds each run's cost.
+      - name: Claude Code proposes a fix
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          npx -y @anthropic-ai/claude-code@latest -p "$(cat "$RUNNER_TEMP/prompt.md")" \
+            --model "${{ vars.AUTOFIX_MODEL || 'claude-opus-5' }}" \
+            --max-turns 30 \
+            --permission-mode acceptEdits \
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(npx tsc:*),Bash(npm run lint:*),Bash(npm test:*),Bash(bash supabase/tests/run.sh:*),Bash(git diff:*),Bash(git status:*)"
+
+      - name: Verify (types, lint, unit + SQL tests, build)
+        id: verify
+        run: |
+          cp .autofix/result.md "$RUNNER_TEMP/result.md" 2>/dev/null || echo "No notes." > "$RUNNER_TEMP/result.md"
+          rm -rf .autofix
+          if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          if git diff --name-only | grep -q '^\.github/'; then echo "Fix touched .github/ — refused"; exit 1; fi
+          npx tsc --noEmit
+          npm run lint
+          npm test
+          bash supabase/tests/run.sh | tee "$RUNNER_TEMP/sql.log"
+          ! grep -qE "FAIL|ERROR" "$RUNNER_TEMP/sql.log"
+          npm run build
+
+      - name: Open the pull request for review
+        if: steps.verify.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TITLE: ${{ github.event.issue.title }}
+        run: |
+          risk="$(bash "$RUNNER_TEMP/gate.sh")"
+          label="$([ "$risk" = low-risk ] && echo low-risk || echo sensitive)"
+          branch="autofix/issue-$N"
+          git config user.name "circle-autofix"
+          git config user.email "circle-autofix@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add -A
+          git commit -q -m "Auto-fix #$N: ${TITLE#\[auto-fix\] }"
+          git push -q "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "$branch"
+          gh label create auto-fix --color 0E8A16 --force >/dev/null
+          gh label create low-risk --color C2E0C6 --force >/dev/null
+          gh label create sensitive --color D93F0B --force >/dev/null
+          body="$(printf 'Fixes #%s\n\n%s\n\n**Checks:** types, lint, unit tests, SQL security tests and build all passed.\n**Review level:** %s' "$N" "$(cat "$RUNNER_TEMP/result.md")" "$risk")"
+          url="$(gh pr create --base main --head "$branch" --title "Auto-fix #$N: ${TITLE#\[auto-fix\] }" --body "$body" --label auto-fix --label "$label")"
+          gh issue comment "$N" --body "Fix verified (${risk}). Review and merge: $url
+
+          circle-autofix: outcome=awaiting_approval pr=$url"
+
+      - name: No code change needed
+        if: steps.verify.outputs.changed == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment "$N" --body "$(cat "$RUNNER_TEMP/result.md")
+
+          circle-autofix: outcome=no_fix"
+          gh issue close "$N" --reason "not planned"
+
+      - name: Fix failed verification
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment "$N" --body "The automatic fix did not pass the checks, so no pull request was opened. The error stays in the operations summary for a manual look.
+
+          circle-autofix: outcome=no_fix"

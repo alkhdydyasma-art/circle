@@ -32,6 +32,19 @@ Deploy: patient data must stay in Saudi Arabia (PDPL), so production runs self-h
 n8n on one VM in Oracle Cloud Jeddah (a Saudi region). Everything is scripted in [`deploy/`](deploy/README.md) (install,
 updates, encrypted backups, restore, monitoring). Don't use hosted services outside KSA for patient data.
 
+## Launch checklist
+
+```bash
+npm run preflight -- --live https://your-site     # env, security, PDPL, cost caps + read-only probes
+```
+
+Every push runs CI (`.github/workflows/ci.yml`): types, lint, unit tests, SQL security tests, build.
+
+**Vercel (demo, fictional data only):** import the repo, set the variables from `.env.example`
+(plus `CRON_SECRET`; `vercel.json` runs the daily ops check), and run `supabase/setup.sql` on the
+database. **Production with real patients:** the self-hosted kit in `deploy/` (Jeddah), because
+patient data must stay in Saudi Arabia (PDPL).
+
 ## Database
 
 Run `supabase/setup.sql` (all migrations concatenated) in the SQL Editor, or the files in

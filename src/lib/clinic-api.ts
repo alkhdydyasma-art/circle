@@ -2,6 +2,7 @@ import "server-only";
 import { anonClient } from "@/lib/sites";
 import { hashToken } from "@/lib/tokens";
 import { allow, tooMany } from "@/lib/rate-limit";
+import { recordOps } from "@/lib/ops";
 
 // Shared plumbing for /api/v1/*: API-key auth, error mapping and link building.
 // Every call goes to an api_* SQL function that resolves the clinic from the key hash,
@@ -36,7 +37,10 @@ export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise
   const { data, error } = await anonClient().rpc(fn, args);
   if (error) {
     const code = Object.keys(STATUS).find((c) => error.message?.includes(c));
-    if (!code) console.error(`[api] ${fn} failed`, error.message);
+    if (!code) {
+      console.error(`[api] ${fn} failed`, error.message);
+      await recordOps(fn.includes("reminder") ? "reminders" : "api", "error", `${fn}: ${error.message}`);
+    }
     return json({ error: code ?? "server_error" }, code ? STATUS[code] : 500);
   }
   return { data: data as T };

@@ -15,7 +15,8 @@ export const LIMITS = {
   manage: { limit: 30, window: 3600 },        // self-service link actions per IP per hour
   reset: { limit: 5, window: 3600 },          // password-reset emails per IP per hour
   api: { limit: 300, window: 60 },            // clinic API calls per key per minute
-  whatsapp: { limit: 40, window: 3600 },      // AI replies per patient phone per hour (caps cost and abuse)
+  whatsapp: { limit: 20, window: 3600 },      // AI replies per patient phone per hour (caps cost and abuse)
+  agentDay: { limit: 500, window: 86400 },    // AI replies per clinic per day (hard cost ceiling)
 } as const;
 
 export type LimitName = keyof typeof LIMITS;

@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { z } from "zod";
 import { bookAppointment, formatWhen, notifyBooking } from "@/lib/booking";
 import { getPublicSite } from "@/lib/sites";
@@ -33,12 +34,13 @@ export async function POST(request: Request, { params }: RouteContext<"/api/site
 
   const site = await getPublicSite(slug);
   const booking = withManageUrl(request, result.booking);
-  await notifyBooking({
+  // WhatsApp confirmation goes out after the response, so a slow n8n never delays the patient.
+  after(() => notifyBooking({
     event: "appointment.booked",
     source: "website",
     clinic: { id: site?.clinic.id, name: site?.clinic.name, slug },
     appointment: { ...booking, when: formatWhen(booking.starts_at, site?.site.timezone) },
     patient: { name: input.fullName, phone: normalizeSaudiMobile(input.phone) },
-  });
+  }));
   return Response.json({ booking }, { status: 201 });
 }

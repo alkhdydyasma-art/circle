@@ -1,0 +1,93 @@
+{
+  "name": "Circle — Operations summary to the founder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 0"
+            }
+          ]
+        }
+      },
+      "id": "8c000001-0000-4000-8000-000000000001",
+      "name": "Sunday 8:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.CIRCLE_URL }}/api/ops/summary?days=7",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "8c000001-0000-4000-8000-000000000002",
+      "name": "Get summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "notes": "Credential: Circle webhook secret (Header Auth — x-circle-secret)."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": {{ JSON.stringify($env.FOUNDER_WHATSAPP) }},\n  \"type\": \"template\",\n  \"template\": {\n    \"name\": \"ops_summary\",\n    \"language\": { \"code\": \"ar\" },\n    \"components\": [\n      { \"type\": \"body\", \"parameters\": {{ JSON.stringify($json.template_params.map(t => ({ type: 'text', text: t }))) }} }\n    ]\n  }\n}",
+        "options": {}
+      },
+      "id": "8c000001-0000-4000-8000-000000000003",
+      "name": "Send to founder (WhatsApp template)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "notes": "Credential: WhatsApp Cloud API. FOUNDER_WHATSAPP = your number without + (e.g. 9665XXXXXXXX). Template 'ops_summary' — see n8n/README.md. The full text is in $json.message if you prefer e-mail."
+    }
+  ],
+  "connections": {
+    "Sunday 8:00": {
+      "main": [
+        [
+          {
+            "node": "Get summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get summary": {
+      "main": [
+        [
+          {
+            "node": "Send to founder (WhatsApp template)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

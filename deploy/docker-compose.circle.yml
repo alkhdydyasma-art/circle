@@ -23,10 +23,14 @@ services:
       N8N_LEAD_WEBHOOK_URL: ${N8N_LEAD_WEBHOOK_URL:-}
       N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET}
       N8N_SEND_WEBHOOK_URL: http://n8n:5678/webhook/circle-send
-      # WhatsApp AI assistant (Claude). AGENT_MODEL / AGENT_EFFORT are optional overrides.
+      # WhatsApp AI assistant (Claude). Default model is the low-cost claude-haiku-4-5;
+      # AGENT_MODEL / AGENT_EFFORT are optional overrides.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       AGENT_MODEL: ${AGENT_MODEL:-}
       AGENT_EFFORT: ${AGENT_EFFORT:-}
+      # Auto-fix pipeline: Circle opens GitHub issues for recurring errors (optional).
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GITHUB_REPO: ${GITHUB_REPO:-}
       TZ: Asia/Riyadh
 
   n8n:
@@ -55,6 +59,8 @@ services:
       # Meta webhook: verify token (you choose it) and app secret (signature check).
       WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-}
       WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
+      # Founder's WhatsApp number for the operations summary (international, no +).
+      FOUNDER_WHATSAPP: ${FOUNDER_WHATSAPP:-}
       NODE_FUNCTION_ALLOW_BUILTIN: crypto
       # Executions contain patient names and phone numbers: keep them for 14 days only.
       EXECUTIONS_DATA_PRUNE: "true"

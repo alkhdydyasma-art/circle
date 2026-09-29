@@ -12,6 +12,9 @@ answer a patient who just wrote).
 | `reminders.workflow.json` | Every 30 minutes asks Circle for due reminders (`GET /api/v1/reminders`), sends each one, then marks it sent. |
 | `whatsapp-agent.workflow.json` | Meta webhook for the clinic numbers: verifies Meta's signature, hands each patient message to Circle's AI assistant and sends its reply. |
 | `whatsapp-send.workflow.json` | Internal webhook Circle uses to send a free-text message (front-desk replies from the **المحادثات** inbox). |
+| `ops-monitor.workflow.json` | Every hour calls `POST /api/ops/tick`: recurring errors go to the auto-fix pipeline; fix results are read back. No AI calls. |
+| `ops-summary.workflow.json` | Sundays 8:00 sends the founder the operations summary (`GET /api/ops/summary?days=7`) on WhatsApp. |
+| `error-reporter.workflow.json` | n8n *Error Workflow*: any failed execution is reported to Circle (`POST /api/ops/report`). Set it as the error workflow of every Circle workflow. |
 | `weekly-report.workflow.json` | Every Sunday 7:00 sends the clinic owner a summary of the past week (`GET /api/v1/reports?days=7`) — numbers only. |
 
 ## Setup
@@ -40,7 +43,7 @@ Kingdom, so messages include only what the patient needs to attend (data minimis
 
 ```
 مرحباً {{1}} 👋
-تم استلام حجزك في {{2}}
+تم تأكيد موعدك في {{2}} ✅
 📅 {{3}}
 📍 {{4}}
 
@@ -57,6 +60,17 @@ Kingdom, so messages include only what the patient needs to attend (data minimis
 الإيراد التقديري: {{5}}
 مرضى جدد: {{6}}
 مواعيد الأسبوع القادم: {{7}} (غير مؤكدة: {{8}})
+```
+
+`ops_summary` — 8 parameters (to the founder, `FOUNDER_WHATSAPP`; operations numbers only):
+
+```
+📡 تقرير تشغيل سيركل — آخر {{1}} أيام
+رسائل ردّ عليها المساعد: {{2}} (95% خلال {{3}})
+نسبة الأخطاء: {{4}}
+حجوزات تأكدت تلقائياً: {{5}}
+أخطاء عالجها النظام بنفسه: {{6}}
+إصلاحات دُمجت: {{7}} | تنتظر موافقتك: {{8}}
 ```
 
 `appointment_reminder` — 5 parameters:
@@ -109,9 +123,48 @@ Setup:
    phone number id, add knowledge entries (insurance, parking, offers…), and turn the assistant on.
    Only Circle staff can link a number, so no clinic can receive another clinic's messages.
 
+Autonomy and safety:
+
+- **Bookings confirm themselves** (clinic setting *تأكيد الحجوزات تلقائياً*, on by default): the
+  database validates hours and prevents double-booking, so website, WhatsApp and dashboard
+  bookings are `confirmed` immediately.
+- **Medical emergencies**: a keyword check runs before any AI call (Arabic + English). On a
+  match — or when the model calls `report_emergency` — the assistant stops for that chat, the
+  patient gets a fixed message (997 + clinic phone), and a red alert appears on every dashboard
+  page for owners, managers and reception until someone marks it handled.
+- **Cost caps**: Haiku by default; ≤ 5 model calls and 1,024 output tokens per message; last 12
+  messages of history; 20 AI replies per patient per hour; 500 per clinic per day (past that,
+  patients get the booking link). Emergencies and outages cost no tokens.
+- **Self-healing**: WhatsApp sends and n8n calls retry with backoff; the Anthropic SDK retries
+  transient API errors; if the assistant keeps failing, a circuit breaker sends patients the
+  self-service booking link and closes by itself once the assistant recovers.
+
 Privacy: patient messages are sent to Anthropic to generate replies (disclose this in the clinic's
 privacy notice); conversations are deleted after 90 days. The assistant never gives medical advice
 and sends emergencies to 997.
+
+## Operations: monitoring, auto-fix, summary
+
+Every outcome (assistant replies and their speed, bookings, WhatsApp sends, n8n errors) is logged
+in `ops_events` with personal data scrubbed (phones, e-mails, ids, quoted values). Errors are
+grouped into `ops_incidents`.
+
+Auto-fix pipeline (`.github/workflows/autofix.yml`):
+
+1. The hourly ops monitor opens a GitHub issue labelled `auto-fix` for an incident that recurs
+   (3+ times) or any booking failure — at most 3 per day and 5 in progress.
+2. The workflow runs Claude Code on it (`--max-turns 30`), then types, lint, unit tests, all SQL
+   security tests and the production build. If anything fails, nothing is proposed.
+3. A verified fix becomes a pull request labelled `low-risk` or `sensitive` (security, database,
+   patient data, money, AI, messaging, deployment). **It never merges by itself — you review and
+   merge with one tap.** Vercel (demo) deploys the merge; on the server run `deploy/deploy.sh`.
+4. The result is written back to the issue and appears in your Sunday summary.
+
+Setup: in GitHub → repo → Settings → Secrets and variables → Actions, add `ANTHROPIC_API_KEY`;
+create a fine-grained token (this repo only, *Issues: read & write*) and set `GITHUB_TOKEN` +
+`GITHUB_REPO=owner/circle` for the app; import `ops-monitor`, `ops-summary` and
+`error-reporter`, set `FOUNDER_WHATSAPP`, and submit the `ops_summary` template. Keep the
+repository **private**: issues contain error text (scrubbed) and code locations.
 
 ## Reports
 

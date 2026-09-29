@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { runAgent } from "@/lib/agent";
+import { agentDegraded, errorText, fallbackReply, recordOps } from "@/lib/ops";
+import { detectEmergency, emergencyReply } from "@/lib/emergency";
 import { allow } from "@/lib/rate-limit";
 import { createServiceClient } from "@/lib/supabase/server";
 import { fromN8n } from "@/lib/whatsapp";
@@ -35,11 +37,27 @@ export async function POST(request: Request) {
   });
   if (error) {
     const known = /unknown_number|invalid_phone/.exec(error.message)?.[0];
-    if (!known) console.error("[whatsapp] inbound failed", error.message);
+    if (!known) {
+      console.error("[whatsapp] inbound failed", error.message);
+      await recordOps("whatsapp", "error", `agent_inbound: ${error.message}`);
+    }
     return Response.json({ error: known ?? "error" }, { status: known ? 422 : 500 });
   }
   if (!conv) return Response.json({ reply: null, duplicate: true });
   const c = conv as { clinic_id: string; conversation_id: string; phone: string; status: string; ai_enabled: boolean };
+
+  // Medical emergency protocol: checked before anything else and before any AI call.
+  // Raises the red alert for the clinic, stops the assistant for this chat and sends the
+  // fixed safety message (997 + clinic phone).
+  const alarm = m.type === "text" ? detectEmergency(text) : null;
+  if (alarm) {
+    await db.rpc("agent_emergency", { p_conversation: c.conversation_id, p_reason: `«${alarm}»` });
+    if (!c.ai_enabled) return Response.json({ reply: null, emergency: true, conversation_id: c.conversation_id });
+    const { data: site } = await db.from("clinic_sites").select("phone").eq("clinic_id", c.clinic_id).maybeSingle();
+    const reply = emergencyReply(site?.phone);
+    await db.rpc("agent_reply", { p_conversation: c.conversation_id, p_body: reply });
+    return Response.json({ reply, emergency: true, conversation_id: c.conversation_id });
+  }
 
   // Staff handles this chat, or the assistant is off: the message waits in the inbox.
   if (!c.ai_enabled || c.status === "human") return Response.json({ reply: null, conversation_id: c.conversation_id, handled_by: "staff" });
@@ -47,16 +65,36 @@ export async function POST(request: Request) {
     await db.rpc("agent_handoff", { p_conversation: c.conversation_id, p_reason: "Too many messages in an hour" });
     return Response.json({ reply: null, conversation_id: c.conversation_id, handled_by: "staff" });
   }
+  // Hard daily cost ceiling per clinic: past it, patients get the self-service booking link.
+  if (!(await allow("agentDay", c.clinic_id))) {
+    const reply = await fallbackReply(c.clinic_id);
+    await db.rpc("agent_reply", { p_conversation: c.conversation_id, p_body: reply });
+    await recordOps("agent", "degraded", null, c.clinic_id);
+    return Response.json({ reply, capped: true, conversation_id: c.conversation_id });
+  }
+
+  // Circuit breaker: while the assistant keeps failing, patients get the self-service link
+  // straight away; 1 in 5 messages still goes to the assistant to detect recovery.
+  const started = Date.now();
+  if ((await agentDegraded()) && Math.random() > 0.2) {
+    const reply = await fallbackReply(c.clinic_id);
+    await db.rpc("agent_reply", { p_conversation: c.conversation_id, p_body: reply });
+    await recordOps("agent", "degraded", null, c.clinic_id);
+    return Response.json({ reply, degraded: true, conversation_id: c.conversation_id });
+  }
 
   try {
     const result = await runAgent({ clinicId: c.clinic_id, conversationId: c.conversation_id, phone: c.phone });
     if (result.reply) await db.rpc("agent_reply", { p_conversation: c.conversation_id, p_body: result.reply });
-    return Response.json({ reply: result.reply || null, handoff: result.handoff, actions: result.actions, conversation_id: c.conversation_id });
+    await recordOps("agent", result.failed ? "fallback" : "ok", result.failed ?? null, c.clinic_id, Date.now() - started);
+    return Response.json({ reply: result.reply || null, handoff: result.handoff, emergency: result.emergency, actions: result.actions, conversation_id: c.conversation_id });
   } catch (err) {
-    console.error("[whatsapp] agent failed", err instanceof Error ? err.message : err);
-    await db.rpc("agent_handoff", { p_conversation: c.conversation_id, p_reason: "Assistant error" });
-    const reply = "المعذرة، بيتواصل معك أحد من فريق العيادة هنا قريباً 🌿";
+    console.error("[whatsapp] agent failed", errorText(err));
+    await recordOps("agent", "error", errorText(err), c.clinic_id, Date.now() - started);
+    // The patient can still book or change their visit themselves; the chat stays with the
+    // assistant, which answers the next message once the error clears.
+    const reply = await fallbackReply(c.clinic_id);
     await db.rpc("agent_reply", { p_conversation: c.conversation_id, p_body: reply });
-    return Response.json({ reply, handoff: true, conversation_id: c.conversation_id });
+    return Response.json({ reply, fallback: true, conversation_id: c.conversation_id });
   }
 }

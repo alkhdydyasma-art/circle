@@ -210,6 +210,10 @@ const ar = {
       export: "تنزيل CSV", auto: "تقرير أسبوعي تلقائي", autoHelp: "فعّل سير عمل «التقرير الأسبوعي» في n8n ليصلك ملخص كل أحد صباحاً على واتساب — أرقام فقط بدون بيانات المرضى.",
       none: "لا توجد بيانات في هذه الفترة.", sar: "ر.س",
     },
+    emergency: {
+      badge: "طارئ", title: "حالة طارئة محتملة", help: "أُرسلت للمريض تعليمات الطوارئ (997) وأُوقف المساعد في هذه المحادثة. تواصلوا معه فوراً.",
+      open: "فتح المحادثة", call: "اتصال بالمريض", ack: "تم التعامل معها", since: "منذ",
+    },
     inbox: {
       title: "المحادثات", empty: "لا توجد محادثات بعد. تظهر هنا رسائل المرضى على واتساب العيادة.",
       pick: "اختر محادثة", ai: "المساعد يرد", human: "الاستقبال يرد", closed: "مغلقة", attention: "تحتاج رد",
@@ -220,6 +224,7 @@ const ar = {
     },
     automation: {
       title: "الأتمتة", settings: "التذكير والتعديل",
+      autoConfirm: "تأكيد الحجوزات تلقائياً (بدون انتظار الاستقبال)", autoConfirmHint: "النظام يتحقق من الوقت والطبيب ويمنع التعارض، فيتأكد الحجز فوراً من الموقع وواتساب.",
       reminders: "إرسال تذكير واتساب قبل الموعد", hoursBefore: "قبل الموعد بـ (ساعة)",
       cutoff: "يسمح للمريض بالتغيير أو الإلغاء حتى (ساعة) قبل الموعد",
       autoOccasions: "تفعيل قالب يوم التأسيس (20–25 فبراير) واليوم الوطني (20–26 سبتمبر) تلقائياً",
@@ -445,6 +450,10 @@ const en: PortalDictionary = {
       export: "Download CSV", auto: "Automatic weekly report", autoHelp: "Turn on the “Weekly report” n8n workflow to get a summary every Sunday morning on WhatsApp — numbers only, no patient data.",
       none: "No data for this period.", sar: "SAR",
     },
+    emergency: {
+      badge: "Urgent", title: "Possible medical emergency", help: "The patient was sent emergency instructions (997) and the assistant stopped for this chat. Contact them now.",
+      open: "Open chat", call: "Call patient", ack: "Handled", since: "since",
+    },
     inbox: {
       title: "Conversations", empty: "No conversations yet. Patients' WhatsApp messages to the clinic appear here.",
       pick: "Pick a conversation", ai: "Assistant replying", human: "Front desk replying", closed: "Closed", attention: "Needs reply",
@@ -455,6 +464,7 @@ const en: PortalDictionary = {
     },
     automation: {
       title: "Automation", settings: "Reminders & changes",
+      autoConfirm: "Confirm bookings automatically (no front-desk step)", autoConfirmHint: "The system checks the time and doctor and prevents clashes, so website and WhatsApp bookings are confirmed instantly.",
       reminders: "Send a WhatsApp reminder before each visit", hoursBefore: "Hours before",
       cutoff: "Patients may change or cancel up to (hours) before the visit",
       autoOccasions: "Switch to the Founding Day (Feb 20–25) and National Day (Sep 20–26) themes automatically",

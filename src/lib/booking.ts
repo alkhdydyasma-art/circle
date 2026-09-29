@@ -1,4 +1,5 @@
 import "server-only";
+import { recordOps, withRetry } from "@/lib/ops";
 import { anonClient } from "@/lib/sites";
 
 export type Slot = { doctor_id: string; branch_id: string; starts_at: string };
@@ -43,7 +44,7 @@ export async function getAvailability(opts: {
 export const BOOKING_ERRORS = ["slot_unavailable", "too_many_bookings", "invalid_phone", "invalid_name", "clinic_not_found"] as const;
 export type BookingError = (typeof BOOKING_ERRORS)[number] | "error";
 
-export type Booked = { id: string; starts_at: string; service: string; doctor: string; branch: string; manage_token?: string };
+export type Booked = { id: string; starts_at: string; status?: string; service: string; doctor: string; branch: string; manage_token?: string };
 
 export async function bookAppointment(input: {
   slug: string; serviceId: string; doctorId: string; branchId: string; startsAt: string;
@@ -61,7 +62,10 @@ export async function bookAppointment(input: {
   });
   if (error) {
     const known = BOOKING_ERRORS.find((e) => error.message?.includes(e));
-    if (!known) console.error("[booking] book_appointment failed", error.message);
+    if (!known) {
+      console.error("[booking] book_appointment failed", error.message);
+      await recordOps("booking", "error", `book_appointment: ${error.message}`);
+    }
     return { ok: false, error: known ?? "error" };
   }
   return { ok: true, booking: data as Booked };
@@ -77,15 +81,18 @@ export async function notifyBooking(payload: Record<string, unknown>) {
   const url = process.env.N8N_BOOKING_WEBHOOK_URL;
   if (!url) return;
   try {
-    await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(process.env.N8N_WEBHOOK_SECRET && { "x-circle-secret": process.env.N8N_WEBHOOK_SECRET }),
-      },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(4000),
-    });
+    await withRetry("n8n", "booking webhook", async () => {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(process.env.N8N_WEBHOOK_SECRET && { "x-circle-secret": process.env.N8N_WEBHOOK_SECRET }),
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(4000),
+      });
+      if (!res.ok) throw new Error(`booking webhook ${res.status}`);
+    }, { attempts: 2 });
   } catch (err) {
     console.error("[booking] n8n notify failed", err); // the booking itself is already saved
   }

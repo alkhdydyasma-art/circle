@@ -324,10 +324,12 @@ export async function saveAutomation(_: FormState, fd: FormData): Promise<FormSt
     reminder_hours_before: z.coerce.number().int().min(1).max(72),
     reschedule_cutoff_hours: z.coerce.number().int().min(0).max(168),
     auto_occasions: z.boolean(),
+    auto_confirm: z.boolean(),
   }).safeParse({
     clinicId: fd.get("clinicId"), reminders_enabled: fd.get("reminders_enabled") === "on",
     reminder_hours_before: fd.get("reminder_hours_before"), reschedule_cutoff_hours: fd.get("reschedule_cutoff_hours"),
     auto_occasions: fd.get("auto_occasions") === "on",
+    auto_confirm: fd.get("auto_confirm") === "on",
   });
   if (!p.success) return { error: "invalid" };
   const { clinicId, ...fields } = p.data;

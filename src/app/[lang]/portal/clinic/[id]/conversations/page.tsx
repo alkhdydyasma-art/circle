@@ -10,7 +10,7 @@ import { ActionForm } from "@/components/portal/ActionForm";
 import { AutoRefresh } from "@/components/portal/AutoRefresh";
 import { Badge, Card, inputCls } from "@/components/portal/ui";
 
-type Conv = { id: string; patient_phone: string; patient_name: string | null; status: "ai" | "human" | "closed"; needs_attention: boolean; handoff_reason: string | null; last_message_at: string };
+type Conv = { id: string; patient_phone: string; patient_name: string | null; status: "ai" | "human" | "closed"; needs_attention: boolean; handoff_reason: string | null; last_message_at: string; emergency_at: string | null; emergency_ack_at: string | null };
 type Msg = { id: number; role: "patient" | "agent" | "staff"; body: string; created_at: string };
 
 // WhatsApp inbox: the assistant's chats, with take-over and staff replies.
@@ -25,7 +25,7 @@ export default async function ConversationsPage({ params, searchParams }: PagePr
   const supabase = await createClient();
 
   const { data: convs } = await supabase.from("conversations")
-    .select("id, patient_phone, patient_name, status, needs_attention, handoff_reason, last_message_at")
+    .select("id, patient_phone, patient_name, status, needs_attention, handoff_reason, last_message_at, emergency_at, emergency_ack_at")
     .eq("clinic_id", id).order("needs_attention", { ascending: false }).order("last_message_at", { ascending: false }).limit(100).returns<Conv[]>();
   const conv = typeof selected === "string" ? (convs ?? []).find((c) => c.id === selected) : undefined;
   const { data: msgs } = conv
@@ -56,6 +56,7 @@ export default async function ConversationsPage({ params, searchParams }: PagePr
                 <Link href={`${base}?c=${c.id}`} className={`flex min-h-16 items-center justify-between gap-3 px-4 py-3 transition hover:bg-bg ${conv?.id === c.id ? "bg-teal/10" : ""}`}>
                   <span className="min-w-0">
                     <span className="flex items-center gap-1.5 font-medium">
+                      {c.emergency_at && !c.emergency_ack_at && <Badge tone="rose">🚨 {t.dash.emergency.badge}</Badge>}
                       {c.needs_attention && <CircleAlert className="size-4 shrink-0 text-rose-500" aria-label={ib.attention} />}
                       <span className="truncate">{c.patient_name ?? c.patient_phone}</span>
                     </span>

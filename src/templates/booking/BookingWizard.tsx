@@ -9,7 +9,7 @@ type Service = { id: string; name: string; description: string | null; duration_
 type Doctor = { id: string; full_name: string; title: string | null; specialty: string | null; service_ids: string[]; photo?: string };
 type Branch = { id: string; name: string };
 type Slot = { doctor_id: string; branch_id: string; starts_at: string };
-type Booked = { id: string; starts_at: string; service: string; doctor: string; branch: string; manage_url?: string };
+type Booked = { id: string; starts_at: string; status?: string; service: string; doctor: string; branch: string; manage_url?: string };
 
 type Props = {
   slug: string;
@@ -145,8 +145,8 @@ export function BookingWizard(p: Props) {
         <span className="mx-auto grid size-16 place-items-center rounded-full bg-site-primary text-site-primary-fg">
           <Check className="size-8" />
         </span>
-        <h2 className="mt-5 text-2xl font-bold">{t.done}</h2>
-        <p className="mt-2 text-site-muted">{p.remindersEnabled ? t.doneHintReminders : t.doneHint}</p>
+        <h2 className="mt-5 text-2xl font-bold">{booked.status === "confirmed" ? t.doneConfirmed : t.done}</h2>
+        <p className="mt-2 text-site-muted">{booked.status === "confirmed" ? t.doneConfirmedHint : p.remindersEnabled ? t.doneHintReminders : t.doneHint}</p>
         <dl className="mt-6 space-y-2 rounded-2xl bg-site-surface p-5 text-start text-sm">
           <div className="flex justify-between gap-4"><dt className="text-site-muted">{t.steps[0]}</dt><dd className="font-semibold">{booked.service}</dd></div>
           <div className="flex justify-between gap-4"><dt className="text-site-muted">{t.steps[2]}</dt><dd className="font-semibold">{fmtFull.format(new Date(booked.starts_at))}</dd></div>

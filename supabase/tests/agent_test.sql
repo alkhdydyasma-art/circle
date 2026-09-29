@@ -111,6 +111,7 @@ create temp table booked as
     'd000000a-0000-0000-0000-000000000000', 'b000000a-0000-0000-0000-000000000000', (select min(starts_at) from s)) as j;
 select pg_temp.expect_eq('booked via agent source',
   $$select source from public.appointments where id = (select (j ->> 'id')::uuid from booked)$$, 'ai_agent');
+select pg_temp.expect_eq('booking confirmed instantly (auto-confirm)', $$select j ->> 'status' from booked$$, 'confirmed');
 select pg_temp.expect_eq('owner phone sees it',
   $$select jsonb_array_length(public.agent_find_appointments('c000000a-0000-0000-0000-000000000000', '+966551111111'))::text$$, '1');
 select pg_temp.expect_eq('another phone sees nothing',
@@ -126,6 +127,8 @@ select pg_temp.expect_fail('other phone cannot search reschedule slots',
 select pg_temp.expect_eq('reschedule to next slot',
   $$select (public.agent_reschedule('c000000a-0000-0000-0000-000000000000', '+966551111111', (select (j ->> 'id')::uuid from booked),
      (select max(starts_at) from s)) ->> 'starts_at')::timestamptz = (select max(starts_at) from s)$$, 'true');
+select pg_temp.expect_eq('rescheduled visit stays confirmed',
+  $$select status from public.appointments where id = (select (j ->> 'id')::uuid from booked)$$, 'confirmed');
 select pg_temp.expect_eq('confirm',
   $$select public.agent_confirm('c000000a-0000-0000-0000-000000000000', '+966551111111', (select (j ->> 'id')::uuid from booked)) ->> 'status'$$, 'confirmed');
 select pg_temp.expect_eq('cancel',
@@ -166,6 +169,47 @@ select pg_temp.expect_eq('clinic can switch its assistant on',
 select pg_temp.act_as(null);
 select pg_temp.expect_fail('anon cannot call agent_inbound', $$select public.agent_inbound('111111', '0551111111', null, 'wamid.9', 'x')$$);
 select pg_temp.expect_fail('anon cannot read conversations', $$select count(*) from public.conversations$$);
+
+-- ─── Manual confirmation (clinic opted out of auto-confirm) ──────────────────
+reset role;
+update public.clinic_sites set auto_confirm = false where clinic_id = 'c000000b-0000-0000-0000-000000000000';
+select pg_temp.expect_eq('opted-out clinic keeps bookings pending',
+  $$select public.agent_book('c000000b-0000-0000-0000-000000000000', '0557777777', 'Manual Test', '5000000b-0000-0000-0000-000000000000',
+    'd000000b-0000-0000-0000-000000000000', 'b000000b-0000-0000-0000-000000000000',
+    (select min(starts_at) from public.agent_slots('c000000b-0000-0000-0000-000000000000', '+966557777777', '5000000b-0000-0000-0000-000000000000', (select day from d), 1))) ->> 'status'$$,
+  'pending');
+update public.clinic_sites set auto_confirm = true where clinic_id = 'c000000b-0000-0000-0000-000000000000';
+
+-- ─── Operations log & self-healing ──────────────────────────────────────────
+select pg_temp.expect_eq('errors are scrubbed of personal data',
+  $$select public.ops_scrub('Key (phone)=(+966551234567) owner@a.sa 0551234567 c000000a-0000-0000-0000-000000000000')$$,
+  'Key (phone)=(…) <email> <num> <id>');
+select public.ops_record('booking', 'error', 'slot check failed for 0551111111 at 10', 'c000000a-0000-0000-0000-000000000000');
+select public.ops_record('booking', 'error', 'slot check failed for 0552222222 at 11', 'c000000a-0000-0000-0000-000000000000');
+select pg_temp.expect_eq('same error groups into one incident',
+  $$select occurrences::text from public.ops_incidents where source = 'booking'$$, '2');
+select pg_temp.expect_eq('no phone stored in the log',
+  $$select count(*)::text from public.ops_events where message ~ '055'$$, '0');
+select pg_temp.expect_eq('booking incident queued for auto-fix', $$select count(*)::text from public.ops_incidents_to_fix(3)$$, '1');
+select public.ops_incident_update((select signature from public.ops_incidents where source = 'booking'), 'fixed', 12, 'https://github.com/x/y/pull/13');
+update public.ops_incidents set fixed_at = now() - interval '2 hours' where source = 'booking';
+select public.ops_record('booking', 'error', 'slot check failed for 0553333333 at 12');
+select pg_temp.expect_eq('a fixed error that returns is reopened',
+  $$select status from public.ops_incidents where source = 'booking'$$, 'open');
+select pg_temp.expect_eq('breaker closed when healthy', $$select public.ops_agent_degraded()::text$$, 'false');
+select public.ops_record('agent', 'error', 'overloaded') from generate_series(1, 5);
+select pg_temp.expect_eq('breaker opens after repeated agent errors', $$select public.ops_agent_degraded()::text$$, 'true');
+select public.ops_record('agent', 'ok', null, null, 900) from generate_series(1, 6);
+select pg_temp.expect_eq('breaker closes when the agent recovers', $$select public.ops_agent_degraded()::text$$, 'false');
+select pg_temp.expect_eq('summary reports agent speed',
+  $$select (public.ops_summary(now() - interval '1 day', now() + interval '1 minute') -> 'agent_latency_ms' ->> 'p50')$$, '900');
+select pg_temp.act_as('owner@a.sa');
+select pg_temp.expect_eq('clinic owners do not see the ops log', $$select count(*)::text from public.ops_events$$, '0');
+select pg_temp.expect_fail('clinic users cannot write the ops log', $$select public.ops_record('agent', 'ok')$$);
+select pg_temp.expect_fail('clinic users cannot read the ops summary', $$select public.ops_summary(now() - interval '1 day', now())$$);
+select pg_temp.act_as(null);
+select pg_temp.expect_fail('anon cannot write the ops log', $$select public.ops_record('agent', 'ok')$$);
+reset role;
 
 -- ─── Reports ────────────────────────────────────────────────────────────────
 select pg_temp.act_as('owner@a.sa');

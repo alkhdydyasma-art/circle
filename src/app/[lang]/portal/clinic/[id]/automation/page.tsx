@@ -11,7 +11,7 @@ import { ActionForm, Field } from "@/components/portal/ActionForm";
 import { Badge, Card, ghostBtnCls, inputCls } from "@/components/portal/ui";
 
 type Settings = {
-  reminders_enabled: boolean; reminder_hours_before: number; reschedule_cutoff_hours: number; auto_occasions: boolean;
+  auto_confirm: boolean; reminders_enabled: boolean; reminder_hours_before: number; reschedule_cutoff_hours: number; auto_occasions: boolean;
   ai_agent_enabled: boolean; whatsapp_phone_number_id: string | null; ai_agent_instructions: string;
 };
 type Knowledge = { id: string; title: string; content: string; updated_at: string };
@@ -38,7 +38,7 @@ export default async function AutomationPage({ params }: PageProps<"/[lang]/port
   const au = t.dash.automation;
   const supabase = await createClient();
   const [{ data: s }, { data: keys }, { data: knowledge }] = await Promise.all([
-    supabase.from("clinic_sites").select("reminders_enabled, reminder_hours_before, reschedule_cutoff_hours, auto_occasions, ai_agent_enabled, whatsapp_phone_number_id, ai_agent_instructions").eq("clinic_id", id).single<Settings>(),
+    supabase.from("clinic_sites").select("auto_confirm, reminders_enabled, reminder_hours_before, reschedule_cutoff_hours, auto_occasions, ai_agent_enabled, whatsapp_phone_number_id, ai_agent_instructions").eq("clinic_id", id).single<Settings>(),
     supabase.from("clinic_api_keys").select("id, name, prefix, created_at, last_used_at, revoked_at").eq("clinic_id", id).order("created_at", { ascending: false }).returns<Key[]>(),
     supabase.from("clinic_knowledge").select("id, title, content, updated_at").eq("clinic_id", id).order("created_at").returns<Knowledge[]>(),
   ]);
@@ -56,6 +56,10 @@ export default async function AutomationPage({ params }: PageProps<"/[lang]/port
 
       <Card title={au.settings}>
         <ActionForm version={JSON.stringify(s)} action={saveAutomation} hidden={{ lang, clinicId: id }} messages={m} submitLabel={au.save}>
+          <label className="flex items-start gap-2 text-sm">
+            <input type="checkbox" name="auto_confirm" defaultChecked={s.auto_confirm} className="mt-0.5 size-4 accent-teal-500" />
+            <span><span className="font-medium">{au.autoConfirm}</span><span className="block text-xs text-muted">{au.autoConfirmHint}</span></span>
+          </label>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="reminders_enabled" defaultChecked={s.reminders_enabled} className="size-4 accent-teal-500" />{au.reminders}</label>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label={au.hoursBefore}><input name="reminder_hours_before" type="number" min={1} max={72} defaultValue={s.reminder_hours_before} className={inputCls} /></Field>

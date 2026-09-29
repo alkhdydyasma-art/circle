@@ -116,6 +116,9 @@ env_default "$E" WHATSAPP_PHONE_NUMBER_ID ""
 env_default "$E" WHATSAPP_VERIFY_TOKEN "$(rand_hex 16)"
 env_default "$E" WHATSAPP_APP_SECRET ""
 env_default "$E" ANTHROPIC_API_KEY ""
+env_default "$E" GITHUB_TOKEN ""
+env_default "$E" GITHUB_REPO ""
+env_default "$E" FOUNDER_WHATSAPP ""
 chmod 600 "$E"
 
 # ── 4. Start ─────────────────────────────────────────────────────────────────

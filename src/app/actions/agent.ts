@@ -68,6 +68,17 @@ export async function deleteKnowledge(fd: FormData) {
   refresh(fd, p.data.clinicId, "automation");
 }
 
+// Clears the red emergency alert once a staff member has handled it.
+export async function acknowledgeEmergency(fd: FormData) {
+  const p = z.object({ clinicId: uuid, id: uuid }).safeParse({ clinicId: fd.get("clinicId"), id: fd.get("id") });
+  if (!p.success) return;
+  const supabase = await createClient();
+  await supabase.from("conversations").update({ emergency_ack_at: new Date().toISOString(), needs_attention: false })
+    .eq("id", p.data.id).eq("clinic_id", p.data.clinicId);
+  const l = String(fd.get("lang") ?? "");
+  revalidatePath(`/${hasLocale(l) ? l : "ar"}/portal/clinic/${p.data.clinicId}`, "layout");
+}
+
 // Take over (staff answers), hand back to the assistant, or close.
 export async function setConversationStatus(fd: FormData) {
   const p = z.object({ clinicId: uuid, id: uuid, status: z.enum(["ai", "human", "closed"]) })
@@ -93,7 +104,7 @@ export async function sendStaffReply(_: FormState, fd: FormData): Promise<FormSt
   const { data: site } = await supabase.from("clinic_sites").select("whatsapp_phone_number_id").eq("clinic_id", p.data.clinicId).single();
   if (!site?.whatsapp_phone_number_id) return { error: "invalid" };
   try {
-    await sendWhatsApp(site.whatsapp_phone_number_id, conv.patient_phone, p.data.body);
+    await sendWhatsApp(site.whatsapp_phone_number_id, conv.patient_phone, p.data.body, p.data.clinicId);
   } catch (err) {
     console.error("[inbox] send failed", err instanceof Error ? err.message : err);
     return { error: "error" };

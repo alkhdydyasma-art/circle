@@ -2,6 +2,8 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
+import { recordOps } from "@/lib/ops";
+import { emergencyReply } from "@/lib/emergency";
 
 // The clinic's WhatsApp assistant. One call handles one inbound patient message:
 //   1. retrieval: the clinic's services, prices, doctors, hours, branches and knowledge base
@@ -12,9 +14,16 @@ import { createServiceClient } from "@/lib/supabase/server";
 // Every tool runs a database function scoped to this clinic AND the sender's phone, so the
 // model can only ever act for the person it is talking to.
 
-const MODEL = process.env.AGENT_MODEL || "claude-opus-5";
-const EFFORT = (process.env.AGENT_EFFORT || "medium") as "low" | "medium" | "high";
-const MAX_STEPS = 6;
+// Cost policy: routine WhatsApp chats run on the lightweight Haiku model. A heavier model can
+// be set with AGENT_MODEL (e.g. claude-sonnet-5); effort and server-side refusal fallback are
+// only sent to the models that use them.
+const MODEL = process.env.AGENT_MODEL || "claude-haiku-4-5";
+const LIGHT = MODEL.startsWith("claude-haiku");
+const EFFORT = (process.env.AGENT_EFFORT || "low") as "low" | "medium" | "high";
+// Hard caps per patient message: model calls, output tokens and conversation history.
+const MAX_STEPS = 5;
+const MAX_TOKENS = LIGHT ? 1024 : 4096;
+const HISTORY = 12;
 
 type Ctx = {
   clinic: { name: string; city: string | null; phone: string | null; whatsapp: string | null; timezone: string; about: string | null; website: string };
@@ -26,7 +35,8 @@ type Ctx = {
   knowledge: { title: string; content: string }[];
 };
 
-export type AgentResult = { reply: string; handoff: boolean; actions: string[] };
+/** `failed` explains why the assistant fell back to a safe reply (recorded as an incident). */
+export type AgentResult = { reply: string; handoff: boolean; actions: string[]; failed?: string; emergency?: boolean };
 
 const uuid = z.string().uuid();
 const iso = z.string().datetime({ offset: true });
@@ -45,6 +55,7 @@ const INPUTS = {
   cancel_appointment: z.object({ appointment_id: uuid }),
   confirm_appointment: z.object({ appointment_id: uuid }),
   request_human: z.object({ reason: z.string().min(2).max(300) }),
+  report_emergency: z.object({ reason: z.string().min(2).max(300) }),
 } as const;
 type ToolName = keyof typeof INPUTS;
 
@@ -107,8 +118,13 @@ const TOOLS: Anthropic.Beta.BetaTool[] = [
     input_schema: { type: "object", properties: { appointment_id: { type: "string" } }, required: ["appointment_id"], additionalProperties: false },
   },
   {
+    name: "report_emergency",
+    description: "Call IMMEDIATELY, instead of replying, when the patient describes a possible medical emergency or severe symptoms: difficulty breathing or swallowing, swelling spreading to the face, eye or neck, bleeding that won't stop, facial trauma or a knocked-out tooth, fainting, high fever with swelling, or anything that sounds urgent and beyond routine dental care. The system then sends the patient emergency instructions (997) and alerts the clinic; you will not reply.",
+    input_schema: { type: "object", properties: { reason: { type: "string", description: "The symptoms described, in a few words" } }, required: ["reason"], additionalProperties: false },
+  },
+  {
     name: "request_human",
-    description: "Hand the conversation to the clinic staff: complaints, billing or insurance disputes, medical questions, emergencies, anything you can't do with your tools, or when the patient asks for a person. Tell the patient a team member will reply.",
+    description: "Hand the conversation to the clinic staff: complaints, billing or insurance disputes, medical questions, anything you can't do with your tools, or when the patient asks for a person. Tell the patient a team member will reply.",
     input_schema: { type: "object", properties: { reason: { type: "string", description: "Short reason for the staff" } }, required: ["reason"], additionalProperties: false },
   },
 ];
@@ -131,10 +147,10 @@ How to talk:
 
 How to work:
 - Facts about the clinic (services, prices, doctors, hours, branches, policies) come only from the clinic data and knowledge base below. If something isn't there, say you'll check with the team and use request_human; never invent prices, doctors, times or policies.
-- Times: always search with find_available_times and offer only what it returns. Before booking, rescheduling or cancelling, restate the exact choice (service, doctor, day, time, branch) and get a clear yes. After the tool succeeds, confirm the result in one short message.
+- Times: always search with find_available_times and offer only what it returns. Before booking, rescheduling or cancelling, restate the exact choice (service, doctor, day, time, branch) and get a clear yes. After the tool succeeds, confirm the result in one short message. Bookings and changes are normally confirmed instantly (status "confirmed"): tell the patient their appointment is confirmed. Only if the status is "pending" say the clinic will confirm it.
 - For a new booking you need the patient's full name; ask for it if you don't have it.
 - You can only see and change the appointments of the person writing to you. Never discuss anyone else's appointments.
-- No diagnosis or medical advice. For severe pain, swelling, bleeding or trauma, advise contacting the clinic by phone${ctx.clinic.phone ? ` (${ctx.clinic.phone})` : ""} or calling 997 for emergencies, and use request_human.
+- No diagnosis or medical advice. If the patient describes severe symptoms or a possible emergency, call report_emergency right away and do not write a reply yourself. For other medical questions, use request_human.
 - If the patient sends a voice note, image or file (shown as [voice], [image], [document]), ask them kindly to write their request as text.
 - Changes are allowed up to ${ctx.rules.reschedule_cutoff_hours} hours before the appointment; closer than that, use request_human.
 
@@ -162,7 +178,7 @@ export async function runAgent(input: { clinicId: string; conversationId: string
   const db = createServiceClient();
   const [{ data: ctx, error: ctxErr }, { data: history, error: histErr }] = await Promise.all([
     db.rpc("agent_context", { p_clinic: input.clinicId }),
-    db.rpc("agent_history", { p_conversation: input.conversationId, p_limit: 20 }),
+    db.rpc("agent_history", { p_conversation: input.conversationId, p_limit: HISTORY }),
   ]);
   if (ctxErr || histErr || !ctx) throw new Error(`agent context: ${ctxErr?.message ?? histErr?.message}`);
   const c = ctx as Ctx;
@@ -185,12 +201,18 @@ export async function runAgent(input: { clinicId: string; conversationId: string
 
   async function run(name: ToolName, raw: unknown): Promise<unknown> {
     const parsed = INPUTS[name].safeParse(raw);
-    if (!parsed.success) return { error: "invalid_input", details: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`) };
+    if (!parsed.success) {
+      const details = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`);
+      await recordOps("agent", "error", `invalid ${name} input: ${details.join("; ")}`, input.clinicId);
+      return { error: "invalid_input", details };
+    }
     const a = parsed.data as Record<string, string | number | undefined>;
     const call = async (fn: string, args: Record<string, unknown>) => {
       const { data, error } = await db.rpc(fn, args);
       if (error) {
         const code = Object.keys(ERROR_HINTS).find((k) => error.message.includes(k)) ?? "error";
+        // Business outcomes (slot taken, too late…) are normal; anything else is a bug to fix.
+        if (code === "error") await recordOps("booking", "error", `${fn}: ${error.message}`, input.clinicId);
         return { error: code, hint: ERROR_HINTS[code] ?? "Something went wrong. Apologise and offer to connect them with the clinic." };
       }
       return data;
@@ -222,9 +244,9 @@ export async function runAgent(input: { clinicId: string; conversationId: string
         const r = await call("agent_book", {
           p_clinic: input.clinicId, p_phone: input.phone, p_full_name: a.patient_name, p_service: a.service_id,
           p_doctor: a.doctor_id, p_branch: a.branch_id, p_starts_at: a.starts_at, p_notes: a.notes ?? null,
-        }) as { id?: string; starts_at?: string; service?: string; doctor?: string; branch?: string; error?: string };
+        }) as { id?: string; starts_at?: string; status?: string; service?: string; doctor?: string; branch?: string; error?: string };
         if (r.id) actions.push(`booked:${r.id}`);
-        return r.id ? { booked: true, id: r.id, when: localLabel(r.starts_at!, tz), service: r.service, doctor: r.doctor, branch: r.branch } : r;
+        return r.id ? { booked: true, id: r.id, status: r.status, when: localLabel(r.starts_at!, tz), service: r.service, doctor: r.doctor, branch: r.branch } : r;
       }
       case "reschedule_appointment": {
         const r = await call("agent_reschedule", {
@@ -244,6 +266,12 @@ export async function runAgent(input: { clinicId: string; conversationId: string
         if (r && typeof r === "object" && "id" in r) actions.push(`confirmed:${a.appointment_id}`);
         return view(r);
       }
+      case "report_emergency": {
+        emergency = true;
+        await db.rpc("agent_emergency", { p_conversation: input.conversationId, p_reason: String(a.reason) });
+        actions.push("emergency");
+        return { ok: true };
+      }
       case "request_human": {
         handoff = true;
         await db.rpc("agent_handoff", { p_conversation: input.conversationId, p_reason: String(a.reason) });
@@ -253,16 +281,21 @@ export async function runAgent(input: { clinicId: string; conversationId: string
     }
   }
 
-  const anthropic = new Anthropic();
+  // Transient API errors (overload, rate limit, network) are retried by the SDK with backoff.
+  const anthropic = new Anthropic({ maxRetries: 3, timeout: 40_000 });
+  let failed: string | undefined;
+  let emergency = false;
   let reply = "";
   for (let step = 0; step < MAX_STEPS; step++) {
     const response = await anthropic.beta.messages.create({
       model: MODEL,
-      max_tokens: 16000,
-      output_config: { effort: EFFORT },
-      // Server-side fallback: if a safety classifier declines, the API retries on a suitable model.
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
+      max_tokens: MAX_TOKENS,
+      ...(!LIGHT && {
+        output_config: { effort: EFFORT },
+        // Server-side fallback: if a safety classifier declines, the API retries on a suitable model.
+        betas: ["server-side-fallback-2026-07-01"],
+        fallbacks: "default" as const,
+      }),
       // Stable prefix (tools + clinic prompt) is cached; the clock line changes every call.
       system: [
         { type: "text", text: systemPrompt(c), cache_control: { type: "ephemeral" } },
@@ -276,6 +309,7 @@ export async function runAgent(input: { clinicId: string; conversationId: string
       handoff = true;
       await db.rpc("agent_handoff", { p_conversation: input.conversationId, p_reason: "Assistant declined this request" });
       reply = "شكراً لتواصلك 🌿 بيرد عليك أحد من فريق العيادة هنا قريباً.";
+      failed = "model declined the request (refusal)";
       break;
     }
     const text = response.content.filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text").map((b) => b.text).join("\n").trim();
@@ -289,16 +323,23 @@ export async function runAgent(input: { clinicId: string; conversationId: string
     for (const call of calls) {
       const out = call.name in INPUTS
         ? await run(call.name as ToolName, call.input)
-        : { error: "unknown_tool" };
+        : (await recordOps("agent", "error", `unknown tool ${call.name}`, input.clinicId), { error: "unknown_tool" });
       results.push({ type: "tool_result", tool_use_id: call.id, content: JSON.stringify(out), is_error: !!(out as { error?: string })?.error });
     }
     messages.push({ role: "user", content: results });
+    // Emergency: stop the normal conversation and send the fixed safety message.
+    if (emergency) {
+      handoff = true;
+      reply = emergencyReply(c.clinic.phone);
+      break;
+    }
   }
 
   if (!reply) {
     handoff = true;
+    failed = `no reply after ${MAX_STEPS} steps`;
     await db.rpc("agent_handoff", { p_conversation: input.conversationId, p_reason: "Assistant could not finish" });
     reply = "المعذرة، بيتواصل معك أحد من فريق العيادة هنا قريباً 🌿";
   }
-  return { reply, handoff, actions };
+  return { reply, handoff, actions, failed, emergency };
 }
