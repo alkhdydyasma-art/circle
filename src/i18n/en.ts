@@ -221,6 +221,25 @@ const en: Dictionary = {
       },
     ],
   },
+  pricing: {
+    eyebrow: "Pricing",
+    title: "One clear price, everything included",
+    plan: "Circle clinic plan",
+    perMonth: "SAR / month",
+    note: "Monthly subscription, no long contract — cancel any time.",
+    features: [
+      "A website for your clinic with online booking",
+      "Instant booking confirmation — no front-desk step",
+      "AI WhatsApp assistant that books, reschedules and cancels",
+      "Automatic reminders that cut no-shows",
+      "Dashboard and doctors' board with team roles",
+      "Performance reports and a weekly WhatsApp summary",
+      "Setup and onboarding help from the Circle team",
+    ],
+    fine: "WhatsApp messaging costs charged by Meta are billed to the clinic's account by usage. Online payment through Moyasar.",
+    cta: "Request a demo",
+    refund: "Refund & cancellation policy",
+  },
   faq: {
     eyebrow: "FAQ",
     title: "Everything you need to know before starting",
@@ -251,7 +270,7 @@ const en: Dictionary = {
       },
       {
         q: "Are there long contracts or hidden fees?",
-        a: "Plans are monthly or yearly with clear pricing from day one. We'll send full details after your demo.",
+        a: "No. The subscription is SAR 1,299 per month with no long contract; cancel any time and it runs to the end of the paid month. Details in the refund & cancellation policy.",
       },
     ],
   },
@@ -263,6 +282,7 @@ const en: Dictionary = {
   legal: {
     privacy: "Privacy Policy",
     terms: "Terms of Service",
+    refund: "Refund & Cancellation Policy",
     updated: "Last updated",
     contact: "For privacy requests and questions, reach us on the WhatsApp or phone number below.",
     readPrivacy: "Read the privacy policy",

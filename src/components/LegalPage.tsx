@@ -37,6 +37,7 @@ export function LegalPage({ doc, lang, t }: { doc: LegalDoc; lang: Locale; t: Di
           <p className="font-semibold text-ink">{lang === "ar" ? COMPANY.nameAr : COMPANY.nameEn}</p>
           {legalId && <p className="text-muted">{legalId}</p>}
           <p className="text-muted">{COMPANY.city[lang]}</p>
+          {COMPANY.privacyEmail && <p className="text-muted"><bdi dir="ltr">{COMPANY.privacyEmail}</bdi></p>}
           <p className="mt-2 text-muted">{t.legal.contact}</p>
         </section>
       </main>

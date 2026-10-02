@@ -249,7 +249,7 @@ const termsAr: LegalDoc = {
     {
       id: "fees",
       title: "الرسوم",
-      body: ["تُحدَّد الرسوم ومدة الاشتراك في العقد أو عرض السعر. تكاليف رسائل واتساب لدى Meta تُحتسب على حساب العيادة ما لم يُتفق على غير ذلك."],
+      body: ["الاشتراك 1,299 ريال سعودي شهرياً لكل عيادة ما لم يُتفق كتابياً على غير ذلك، ويُدفع مقدماً عبر بوابة الدفع ميسّر ويتجدد شهرياً. تكاليف رسائل واتساب لدى Meta تُحتسب على حساب العيادة ما لم يُتفق على غير ذلك. الإلغاء والاسترجاع وفق سياسة الاسترجاع والإلغاء."],
     },
     {
       id: "availability",
@@ -288,7 +288,7 @@ const termsEn: LegalDoc = {
     { id: "patients", title: "Patient data", body: ["The clinic is the controller of its patients' data and is responsible for its lawful basis and for informing patients. Circle processes that data as a processor under the privacy policy and the contract."] },
     { id: "assistant", title: "The AI assistant", body: ["The assistant organises appointments and answers general clinic questions. It gives no diagnosis or medical advice and hands clinical questions to the clinic's team."] },
     { id: "use", title: "Acceptable use", body: [["No spam or unlawful content.", "No attempts to access another clinic's data or disrupt the platform.", "Follow WhatsApp Business policies when messaging."]] },
-    { id: "fees", title: "Fees", body: ["Fees and subscription term are set in the contract or quote. WhatsApp messaging costs charged by Meta are billed to the clinic's account unless agreed otherwise."] },
+    { id: "fees", title: "Fees", body: ["The subscription is SAR 1,299 per clinic per month unless agreed otherwise in writing, paid in advance through the Moyasar payment gateway and renewed monthly. WhatsApp messaging costs charged by Meta are billed to the clinic's account unless agreed otherwise. Cancellations and refunds follow the refund & cancellation policy."] },
     { id: "availability", title: "Availability", body: ["We take reasonable care to keep the platform available; it may pause for maintenance or reasons beyond our control, and we announce scheduled maintenance in advance where possible."] },
     { id: "ip", title: "Intellectual property", body: ["The platform, its templates and software belong to Circle. Clinic content (logo, text, images, data) belongs to the clinic, which grants Circle the right to use it only to provide the service."] },
     { id: "end", title: "Ending a subscription", body: ["When a subscription ends, the clinic receives a usable copy of its data, which is then deleted from the platform per the contract and privacy policy."] },
@@ -297,5 +297,68 @@ const termsEn: LegalDoc = {
   ],
 };
 
-export const getLegal = (doc: "privacy" | "terms", lang: Locale): LegalDoc =>
-  doc === "privacy" ? (lang === "en" ? privacyEn : privacyAr) : lang === "en" ? termsEn : termsAr;
+
+const refundAr: LegalDoc = {
+  title: "سياسة الاسترجاع والإلغاء",
+  intro: "توضح هذه السياسة كيف يُلغى اشتراك العيادة في سيركل ومتى يُسترد المبلغ. تنطبق على المدفوعات الإلكترونية عبر بوابة الدفع ميسّر.",
+  sections: [
+    {
+      id: "plan",
+      title: "الاشتراك والدفع",
+      body: ["الاشتراك 1,299 ريال سعودي شهرياً لكل عيادة، يُدفع مقدماً عن كل شهر ويتجدد تلقائياً ما لم يُلغَ. يبدأ الشهر من تاريخ تفعيل حساب العيادة."],
+    },
+    {
+      id: "cancel",
+      title: "الإلغاء",
+      body: [[
+        "تقدر العيادة تلغي اشتراكها في أي وقت برسالة على البريد أو واتساب سيركل.",
+        "يسري الإلغاء في نهاية الشهر المدفوع، وتبقى الخدمة متاحة حتى ذلك التاريخ، ولا يُخصم أي مبلغ بعده.",
+        "عند انتهاء الاشتراك نسلّم العيادة نسخة من بياناتها بصيغة قابلة للاستخدام، ثم تُحذف وفق سياسة الخصوصية.",
+      ]],
+    },
+    {
+      id: "refund",
+      title: "حالات استرداد المبلغ",
+      body: [[
+        "استرداد كامل لأول دفعة إذا طلبت العيادة الإلغاء خلال 7 أيام من الدفع ولم يُفعَّل موقعها أو حسابها بعد.",
+        "استرداد كامل لأي مبلغ خُصم بالخطأ أو مكرراً.",
+        "استرداد جزئي بنسبة الأيام المتبقية إذا تعذّر تقديم الخدمة بسبب خلل من جهتنا لم يُعالج خلال 72 ساعة من إبلاغنا.",
+      ]],
+    },
+    {
+      id: "no-refund",
+      title: "حالات لا يُسترد فيها المبلغ",
+      body: [[
+        "الأيام المستخدمة من الشهر الحالي عند الإلغاء لأسباب لا تتعلق بخلل في الخدمة.",
+        "تكاليف رسائل واتساب لدى Meta، لأنها تُدفع لطرف ثالث.",
+      ]],
+    },
+    {
+      id: "how",
+      title: "طريقة الاسترداد ومدته",
+      body: ["يُعاد المبلغ إلى وسيلة الدفع نفسها عبر ميسّر خلال 14 يوم عمل من الموافقة على الطلب، وقد يختلف وقت ظهوره في الحساب حسب البنك المُصدِر للبطاقة."],
+    },
+    {
+      id: "contact",
+      title: "تقديم الطلب",
+      body: ["أرسل طلب الإلغاء أو الاسترداد مع اسم العيادة ورقم العملية إلى البريد أو واتساب سيركل الظاهرين أسفل الصفحة، ونرد خلال يومي عمل."],
+    },
+  ],
+};
+
+const refundEn: LegalDoc = {
+  title: "Refund & Cancellation Policy",
+  intro: "This policy explains how a clinic cancels its Circle subscription and when payments are refunded. It applies to online payments through the Moyasar payment gateway.",
+  sections: [
+    { id: "plan", title: "Subscription and payment", body: ["The subscription is SAR 1,299 per clinic per month, paid in advance for each month and renewed automatically unless cancelled. The month starts on the date the clinic's account is activated."] },
+    { id: "cancel", title: "Cancellation", body: [["A clinic can cancel at any time by e-mail or WhatsApp to Circle.", "Cancellation takes effect at the end of the paid month; the service stays available until then and nothing more is charged.", "When the subscription ends we hand the clinic a usable copy of its data, which is then deleted per the privacy policy."]] },
+    { id: "refund", title: "When you get a refund", body: [["Full refund of the first payment if the clinic cancels within 7 days of paying and its website or account has not been activated yet.", "Full refund of any amount charged by mistake or twice.", "Pro-rata refund of the remaining days if the service could not be provided because of a fault on our side not fixed within 72 hours of being reported."]] },
+    { id: "no-refund", title: "When payments are not refunded", body: [["Days already used in the current month when cancelling for reasons other than a service fault.", "WhatsApp messaging costs charged by Meta, as they are paid to a third party."]] },
+    { id: "how", title: "How and when", body: ["Refunds go back to the original payment method through Moyasar within 14 business days of approval; the time to appear on a statement depends on the card's issuing bank."] },
+    { id: "contact", title: "Making a request", body: ["Send cancellation or refund requests with the clinic name and transaction number to Circle's e-mail or WhatsApp shown at the bottom of the page; we reply within two business days."] },
+  ],
+};
+
+export type LegalDocName = "privacy" | "terms" | "refund";
+const DOCS = { privacy: { ar: privacyAr, en: privacyEn }, terms: { ar: termsAr, en: termsEn }, refund: { ar: refundAr, en: refundEn } };
+export const getLegal = (doc: LegalDocName, lang: Locale): LegalDoc => DOCS[doc][lang];

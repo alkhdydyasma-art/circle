@@ -1,4 +1,4 @@
-import { MessageCircle, Phone } from "lucide-react";
+import { Mail, MessageCircle, Phone } from "lucide-react";
 import Link from "next/link";
 import type { Dictionary, Locale } from "@/i18n";
 import { COMPANY } from "@/lib/company";
@@ -17,9 +17,10 @@ export function SiteFooter({ t, lang }: { t: Dictionary; lang: Locale }) {
             © {new Date().getFullYear()} Circle. {t.footer.rights}
           </p>
           {legalId && <p>{legalId}</p>}
-          <p className="flex gap-4">
+          <p className="flex flex-wrap gap-x-4 gap-y-1">
             <Link href={`/${lang}/privacy`} className="hover:text-ink">{t.legal.privacy}</Link>
             <Link href={`/${lang}/terms`} className="hover:text-ink">{t.legal.terms}</Link>
+            <Link href={`/${lang}/refund`} className="hover:text-ink">{t.legal.refund}</Link>
           </p>
         </div>
         <div className="space-y-3">
@@ -28,6 +29,12 @@ export function SiteFooter({ t, lang }: { t: Dictionary; lang: Locale }) {
             <Phone className="size-4" />
             <bdi dir="ltr">{PHONE_DISPLAY}</bdi>
           </a>
+          {COMPANY.privacyEmail && (
+            <a href={`mailto:${COMPANY.privacyEmail}`} className="flex items-center gap-2 transition hover:text-ink">
+              <Mail className="size-4" />
+              <bdi dir="ltr">{COMPANY.privacyEmail}</bdi>
+            </a>
+          )}
           <a
             href={whatsappUrl(t.contact.whatsappMessage)}
             target="_blank"

@@ -8,6 +8,7 @@ import { BeforeAfter } from "@/components/BeforeAfter";
 import { DashboardPreview } from "@/components/DashboardPreview";
 import { TemplatesShowcase } from "@/components/TemplatesShowcase";
 import { LeadSection } from "@/components/LeadSection";
+import { Pricing } from "@/components/Pricing";
 import { Testimonials } from "@/components/Testimonials";
 import { Faq } from "@/components/Faq";
 import { WhatsAppFab } from "@/components/WhatsAppFab";
@@ -29,6 +30,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         <DashboardPreview t={t} />
         <TemplatesShowcase t={t} lang={lang} />
         <Testimonials t={t} />
+        <Pricing t={t} lang={lang} />
         <LeadSection lang={lang} t={t} />
         <Faq t={t} />
       </main>
