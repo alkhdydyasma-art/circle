@@ -24,7 +24,10 @@ check("whatsapp", "ANTHROPIC_API_KEY", /^sk-ant-/.test(env.ANTHROPIC_API_KEY ?? 
 check("whatsapp", "N8N_WEBHOOK_SECRET ≥ 32 chars", (env.N8N_WEBHOOK_SECRET ?? "").length >= 32, "Use a long random N8N_WEBHOOK_SECRET (shared with n8n).");
 check("whatsapp", "N8N_SEND_WEBHOOK_URL", !!url(env.N8N_SEND_WEBHOOK_URL ?? ""), "Set N8N_SEND_WEBHOOK_URL (n8n circle-send webhook) for front-desk replies.");
 const agentWf = src("n8n/whatsapp-agent.workflow.json");
-check("whatsapp", "Meta signature check in n8n workflow", /x-hub-signature-256/i.test(agentWf) && /WHATSAPP_APP_SECRET/.test(agentWf), "n8n/whatsapp-agent.workflow.json must verify X-Hub-Signature-256.");
+check("whatsapp", "WHATSAPP_VERIFY_TOKEN", (env.WHATSAPP_VERIFY_TOKEN ?? "").length >= 16, "Set WHATSAPP_VERIFY_TOKEN (same value you type in Meta's webhook settings).");
+check("whatsapp", "WHATSAPP_APP_SECRET", (env.WHATSAPP_APP_SECRET ?? "").length >= 16, "Set WHATSAPP_APP_SECRET (Meta app → Settings → Basic → App secret).");
+check("whatsapp", "n8n workflow sends messages through Circle's signature check", /x-hub-signature-256/i.test(agentWf) && /\/api\/whatsapp\/meta/.test(agentWf), "n8n/whatsapp-agent.workflow.json must call /api/whatsapp/meta.");
+check("whatsapp", "n8n workflows need no server env ($env)", !/\$env\./.test(["whatsapp-agent", "whatsapp-send", "reminders", "booking-confirmation"].map((f) => src(`n8n/${f}.workflow.json`)).join("")), "Use the Settings node instead of $env (n8n Cloud blocks $env).");
 
 // ── Security ────────────────────────────────────────────────────────────────
 const inbound = src("src/app/api/whatsapp/inbound/route.ts");
@@ -75,6 +78,7 @@ if (liveAt > -1) {
   await probe("WhatsApp webhook rejects missing secret", "/api/whatsapp/inbound", { method: "POST", body: "{}" }, 401);
   await probe("Ops summary rejects missing secret", "/api/ops/summary", {}, 401);
   await probe("Ops tick rejects missing secret", "/api/ops/tick", {}, 401);
+  await probe("Meta check rejects missing secret", "/api/whatsapp/meta", { method: "POST", body: "{}" }, 401);
 }
 
 const w = Math.max(...results.map((r) => r.name.length));

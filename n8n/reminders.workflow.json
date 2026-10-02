@@ -23,7 +23,38 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.CIRCLE_URL }}/api/v1/reminders",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s0",
+              "name": "circle_url",
+              "value": "https://circle-mu-eight.vercel.app",
+              "type": "string"
+            },
+            {
+              "id": "s1",
+              "name": "phone_number_id",
+              "value": "PUT_PHONE_NUMBER_ID_HERE",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "c79e0fa1-c7e5-4500-a087-e546c6a37fd2",
+      "name": "Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "notes": "Your settings for this workflow — edit the values here."
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Settings').first().json.circle_url }}/api/v1/reminders",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}
@@ -33,10 +64,16 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        220,
+        440,
         0
       ],
-      "notes": "Credential: Header Auth — Name: Authorization, Value: Bearer ck_… (the clinic's key from Circle → الأتمتة)"
+      "notes": "Credential: Header Auth — Name: Authorization, Value: Bearer ck_… (the clinic's key from Circle → الأتمتة)",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Circle clinic key"
+        }
+      }
     },
     {
       "parameters": {
@@ -48,14 +85,14 @@
       "type": "n8n-nodes-base.splitOut",
       "typeVersion": 1,
       "position": [
-        440,
+        660,
         0
       ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://graph.facebook.com/v21.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Settings').first().json.phone_number_id }}/messages",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
@@ -68,15 +105,21 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        660,
+        880,
         0
       ],
-      "notes": "Credential: Header Auth — Name: Authorization, Value: Bearer <WhatsApp Cloud API token>"
+      "notes": "Credential: Header Auth — Name: Authorization, Value: Bearer <WhatsApp Cloud API token>",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "WhatsApp Cloud API"
+        }
+      }
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.CIRCLE_URL }}/api/v1/reminders/{{ $('One per appointment').item.json.id }}/sent",
+        "url": "={{ $('Settings').first().json.circle_url }}/api/v1/reminders/{{ $('One per appointment').item.json.id }}/sent",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}
@@ -86,24 +129,19 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        880,
+        1100,
         0
       ],
-      "notes": "Same Circle credential as “Get due reminders”"
+      "notes": "Same Circle credential as “Get due reminders”",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Circle clinic key"
+        }
+      }
     }
   ],
   "connections": {
-    "Every 30 minutes": {
-      "main": [
-        [
-          {
-            "node": "Get due reminders",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Get due reminders": {
       "main": [
         [
@@ -131,6 +169,28 @@
         [
           {
             "node": "Mark as sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Get due reminders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 30 minutes": {
+      "main": [
+        [
+          {
+            "node": "Settings",
             "type": "main",
             "index": 0
           }

@@ -28,6 +28,9 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       AGENT_MODEL: ${AGENT_MODEL:-}
       AGENT_EFFORT: ${AGENT_EFFORT:-}
+      # Meta webhook: verify token (you choose it) and app secret. n8n asks Circle to check them.
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-}
+      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
       # Auto-fix pipeline: Circle opens GitHub issues for recurring errors (optional).
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       GITHUB_REPO: ${GITHUB_REPO:-}
@@ -52,13 +55,11 @@ services:
       N8N_DIAGNOSTICS_ENABLED: "false"
       N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
       N8N_PERSONALIZATION_ENABLED: "false"
-      # Workflows read CIRCLE_URL / WHATSAPP_PHONE_NUMBER_ID with $env (Variables need a paid plan).
+      # The workflows keep their settings in a "Settings" node (set circle_url to http://app:3000
+      # here); these variables are kept for older copies of the workflows.
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
       CIRCLE_URL: http://app:3000
       WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
-      # Meta webhook: verify token (you choose it) and app secret (signature check).
-      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-}
-      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
       # Founder's WhatsApp number for the operations summary (international, no +).
       FOUNDER_WHATSAPP: ${FOUNDER_WHATSAPP:-}
       NODE_FUNCTION_ALLOW_BUILTIN: crypto

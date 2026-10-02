@@ -14,8 +14,33 @@
     },
     {
       "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s0",
+              "name": "circle_url",
+              "value": "https://circle-mu-eight.vercel.app",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "78d3b83c-cd68-4e1c-83c3-646e3738b6ad",
+      "name": "Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "notes": "Your settings for this workflow — edit the values here."
+    },
+    {
+      "parameters": {
         "method": "POST",
-        "url": "={{ $env.CIRCLE_URL }}/api/ops/report",
+        "url": "={{ $('Settings').first().json.circle_url }}/api/ops/report",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {
@@ -30,18 +55,35 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        220,
+        440,
         0
       ],
-      "notes": "Set this workflow as the Error Workflow of every Circle workflow (Workflow settings → Error workflow)."
+      "notes": "Set this workflow as the Error Workflow of every Circle workflow (Workflow settings → Error workflow).",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Circle webhook secret"
+        }
+      }
     }
   ],
   "connections": {
-    "On workflow error": {
+    "Settings": {
       "main": [
         [
           {
             "node": "Report to Circle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On workflow error": {
+      "main": [
+        [
+          {
+            "node": "Settings",
             "type": "main",
             "index": 0
           }

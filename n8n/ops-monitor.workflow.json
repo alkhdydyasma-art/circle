@@ -23,8 +23,33 @@
     },
     {
       "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s0",
+              "name": "circle_url",
+              "value": "https://circle-mu-eight.vercel.app",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "4e7c5a56-130a-45d1-8887-8747e9842be3",
+      "name": "Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "notes": "Your settings for this workflow — edit the values here."
+    },
+    {
+      "parameters": {
         "method": "POST",
-        "url": "={{ $env.CIRCLE_URL }}/api/ops/tick",
+        "url": "={{ $('Settings').first().json.circle_url }}/api/ops/tick",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {
@@ -36,18 +61,35 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        220,
+        440,
         0
       ],
-      "notes": "Credential: Circle webhook secret. Sends recurring errors to the auto-fix pipeline and reads back results. Makes no AI calls."
+      "notes": "Credential: Circle webhook secret. Sends recurring errors to the auto-fix pipeline and reads back results. Makes no AI calls.",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Circle webhook secret"
+        }
+      }
     }
   ],
   "connections": {
-    "Every hour": {
+    "Settings": {
       "main": [
         [
           {
             "node": "Ops tick",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every hour": {
+      "main": [
+        [
+          {
+            "node": "Settings",
             "type": "main",
             "index": 0
           }

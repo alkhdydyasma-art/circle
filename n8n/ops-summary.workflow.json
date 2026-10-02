@@ -23,8 +23,45 @@
     },
     {
       "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s0",
+              "name": "circle_url",
+              "value": "https://circle-mu-eight.vercel.app",
+              "type": "string"
+            },
+            {
+              "id": "s1",
+              "name": "phone_number_id",
+              "value": "PUT_PHONE_NUMBER_ID_HERE",
+              "type": "string"
+            },
+            {
+              "id": "s2",
+              "name": "founder_whatsapp",
+              "value": "9665XXXXXXXX",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "0c30103d-90c0-4318-b404-763bf97760e4",
+      "name": "Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "notes": "Your settings for this workflow — edit the values here."
+    },
+    {
+      "parameters": {
         "method": "GET",
-        "url": "={{ $env.CIRCLE_URL }}/api/ops/summary?days=7",
+        "url": "={{ $('Settings').first().json.circle_url }}/api/ops/summary?days=7",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {
@@ -36,20 +73,26 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        220,
+        440,
         0
       ],
-      "notes": "Credential: Circle webhook secret (Header Auth — x-circle-secret)."
+      "notes": "Credential: Circle webhook secret (Header Auth — x-circle-secret).",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Circle webhook secret"
+        }
+      }
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://graph.facebook.com/v21.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Settings').first().json.phone_number_id }}/messages",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": {{ JSON.stringify($env.FOUNDER_WHATSAPP) }},\n  \"type\": \"template\",\n  \"template\": {\n    \"name\": \"ops_summary\",\n    \"language\": { \"code\": \"ar\" },\n    \"components\": [\n      { \"type\": \"body\", \"parameters\": {{ JSON.stringify($json.template_params.map(t => ({ type: 'text', text: t }))) }} }\n    ]\n  }\n}",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": {{ JSON.stringify($('Settings').first().json.founder_whatsapp) }},\n  \"type\": \"template\",\n  \"template\": {\n    \"name\": \"ops_summary\",\n    \"language\": { \"code\": \"ar\" },\n    \"components\": [\n      { \"type\": \"body\", \"parameters\": {{ JSON.stringify($json.template_params.map(t => ({ type: 'text', text: t }))) }} }\n    ]\n  }\n}",
         "options": {}
       },
       "id": "8c000001-0000-4000-8000-000000000003",
@@ -57,14 +100,31 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        440,
+        660,
         0
       ],
-      "notes": "Credential: WhatsApp Cloud API. FOUNDER_WHATSAPP = your number without + (e.g. 9665XXXXXXXX). Template 'ops_summary' — see n8n/README.md. The full text is in $json.message if you prefer e-mail."
+      "notes": "Credential: WhatsApp Cloud API. FOUNDER_WHATSAPP = your number without + (e.g. 9665XXXXXXXX). Template 'ops_summary' — see n8n/README.md. The full text is in $json.message if you prefer e-mail.",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "WhatsApp Cloud API"
+        }
+      }
     }
   ],
   "connections": {
-    "Sunday 8:00": {
+    "Get summary": {
+      "main": [
+        [
+          {
+            "node": "Send to founder (WhatsApp template)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
       "main": [
         [
           {
@@ -75,11 +135,11 @@
         ]
       ]
     },
-    "Get summary": {
+    "Sunday 8:00": {
       "main": [
         [
           {
-            "node": "Send to founder (WhatsApp template)",
+            "node": "Settings",
             "type": "main",
             "index": 0
           }

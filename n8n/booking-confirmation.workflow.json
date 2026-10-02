@@ -17,12 +17,43 @@
         0
       ],
       "webhookId": "7a1b2c3d-00ff-4000-8000-0000000000ff",
-      "notes": "Credential: Header Auth — Name: x-circle-secret, Value: same as N8N_WEBHOOK_SECRET in Vercel. Put this webhook's production URL in N8N_BOOKING_WEBHOOK_URL."
+      "notes": "Credential: Header Auth — Name: x-circle-secret, Value: same as N8N_WEBHOOK_SECRET in Vercel. Put this webhook's production URL in N8N_BOOKING_WEBHOOK_URL.",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Circle webhook secret"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s0",
+              "name": "phone_number_id",
+              "value": "PUT_PHONE_NUMBER_ID_HERE",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "d0da428c-1d87-44f7-afef-5ff7666db071",
+      "name": "Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "notes": "Your settings for this workflow — edit the values here."
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://graph.facebook.com/v21.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Settings').first().json.phone_number_id }}/messages",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
@@ -35,18 +66,35 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        240,
+        460,
         0
       ],
-      "notes": "Credential: Header Auth — Name: Authorization, Value: Bearer <WhatsApp Cloud API token>"
+      "notes": "Credential: Header Auth — Name: Authorization, Value: Bearer <WhatsApp Cloud API token>",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "WhatsApp Cloud API"
+        }
+      }
     }
   ],
   "connections": {
-    "Booking from Circle": {
+    "Settings": {
       "main": [
         [
           {
             "node": "Send WhatsApp template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Booking from Circle": {
+      "main": [
+        [
+          {
+            "node": "Settings",
             "type": "main",
             "index": 0
           }

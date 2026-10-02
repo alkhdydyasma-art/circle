@@ -2,7 +2,13 @@
   "name": "Circle · WhatsApp AI assistant",
   "nodes": [
     {
-      "id": "verify",
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "whatsapp",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "3e51d636-daf9-4556-b287-a7dd599c183b",
       "name": "Meta verification (GET)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
@@ -10,147 +16,86 @@
         0,
         0
       ],
+      "webhookId": "62ee9ac8-0b4e-47ca-8ea4-d7787b7105cd",
+      "notes": "Meta calls this once when you save the webhook in the Meta app."
+    },
+    {
       "parameters": {
-        "httpMethod": "GET",
+        "httpMethod": "POST",
         "path": "whatsapp",
         "responseMode": "responseNode",
-        "options": {}
-      },
-      "webhookId": "circle-whatsapp-get"
-    },
-    {
-      "id": "token",
-      "name": "Verify token matches?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        220,
-        0
-      ],
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "typeValidation": "strict"
-          },
-          "combinator": "and",
-          "conditions": [
-            {
-              "id": "t1",
-              "leftValue": "={{ $json.query['hub.verify_token'] }}",
-              "rightValue": "={{ $env.WHATSAPP_VERIFY_TOKEN }}",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ]
-        },
-        "options": {}
-      }
-    },
-    {
-      "id": "challenge",
-      "name": "Answer challenge",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [
-        440,
-        -80
-      ],
-      "parameters": {
-        "respondWith": "text",
-        "responseBody": "={{ $json.query['hub.challenge'] }}",
-        "options": {}
-      }
-    },
-    {
-      "id": "deny",
-      "name": "Reject",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [
-        440,
-        80
-      ],
-      "parameters": {
-        "respondWith": "text",
-        "responseBody": "forbidden",
         "options": {
-          "responseCode": 403
+          "rawBody": true
         }
-      }
-    },
-    {
-      "id": "inbound",
+      },
+      "id": "b84f9662-1d2b-4a8c-833a-a6227a9f455c",
       "name": "WhatsApp message (POST)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
         0,
-        260
+        300
       ],
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "whatsapp",
-        "responseMode": "onReceived",
-        "options": {
-          "rawBody": true
-        }
-      },
-      "webhookId": "circle-whatsapp-post"
+      "webhookId": "bbef694e-3674-4367-9d74-3c4e92823f22",
+      "notes": "Every patient message arrives here."
     },
     {
-      "id": "extract",
-      "name": "Extract messages",
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "ok",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "5edb36d0-6eee-4d0a-a753-fa8174f356e4",
+      "name": "Answer Meta 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        300
+      ],
+      "notes": "Meta needs a quick 200; the reply is sent afterwards."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Meta signs the exact bytes it sent: pass them on untouched (base64) with the signature.\n// Circle checks the signature with the app secret, so the secret never lives in n8n.\nconst items = $input.all();\nconst out = [];\nfor (let i = 0; i < items.length; i++) {\n  const item = items[i];\n  const raw = item.binary && item.binary.data\n    ? await this.helpers.getBinaryDataBuffer(i, 'data')\n    : Buffer.from(JSON.stringify(item.json.body || {}));  // not raw: will fail the check, safely\n  const headers = item.json.headers || {};\n  out.push({ json: { signature: headers['x-hub-signature-256'] || '', raw_b64: raw.toString('base64') } });\n}\nreturn out;"
+      },
+      "id": "b38a34c6-bfe9-42c7-b932-4e8201e08a35",
+      "name": "Read raw body",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        220,
-        260
-      ],
-      "parameters": {
-        "jsCode": "// Verifies Meta's signature, then turns the webhook into one item per patient message.\nconst crypto = require('crypto');\nconst out = [];\nfor (const item of $input.all()) {\n  const secret = $env.WHATSAPP_APP_SECRET;\n  const sig = (item.json.headers || {})['x-hub-signature-256'] || '';\n  const raw = item.binary && item.binary.data ? Buffer.from(item.binary.data.data, 'base64') : Buffer.from(JSON.stringify(item.json.body));\n  const expected = 'sha256=' + crypto.createHmac('sha256', secret || '').update(raw).digest('hex');\n  if (!secret || sig.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) continue;\n  const body = item.binary && item.binary.data ? JSON.parse(raw.toString('utf8')) : item.json.body;\n  for (const entry of body.entry || []) {\n    for (const change of entry.changes || []) {\n      const v = change.value || {};\n      const names = Object.fromEntries((v.contacts || []).map((c) => [c.wa_id, c.profile && c.profile.name]));\n      for (const m of v.messages || []) {\n        out.push({ json: {\n          phone_number_id: v.metadata && v.metadata.phone_number_id,\n          from: m.from, name: names[m.from] || null, message_id: m.id, type: m.type,\n          text: m.type === 'text' ? m.text.body : m.type === 'interactive' ? (m.interactive.button_reply || m.interactive.list_reply || {}).title : null,\n        } });\n      }\n    }\n  }\n}\nreturn out;"
-      }
-    },
-    {
-      "id": "ask",
-      "name": "Ask Circle assistant",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
         440,
-        260
-      ],
-      "parameters": {
-        "method": "POST",
-        "url": "={{ $env.CIRCLE_URL }}/api/whatsapp/inbound",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json) }}",
-        "options": {
-          "timeout": 60000
-        }
-      },
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "",
-          "name": "Circle webhook secret"
-        }
-      },
-      "onError": "continueRegularOutput"
+        300
+      ]
     },
     {
-      "id": "hasreply",
-      "name": "Has a reply?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s0",
+              "name": "circle_url",
+              "value": "https://circle-mu-eight.vercel.app",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "73f39968-13e6-4eca-a498-77f1df908907",
+      "name": "Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
       "position": [
         660,
-        260
+        160
       ],
+      "notes": "Your settings for this workflow — edit the values here."
+    },
+    {
       "parameters": {
         "conditions": {
           "options": {
@@ -160,7 +105,234 @@
           "combinator": "and",
           "conditions": [
             {
-              "id": "r1",
+              "id": "7cc7ddab-d38e-45ca-84e4-7994ece2236f",
+              "leftValue": "={{ $json.query && $json.query['hub.mode'] }}",
+              "rightValue": "subscribe",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c3c2c334-0fb6-4e96-99c2-d343eeb434c3",
+      "name": "Meta verification?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        880,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Settings').first().json.circle_url }}/api/whatsapp/meta",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ verify_token: $json.query['hub.verify_token'] || '', challenge: $json.query['hub.challenge'] || '' }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "dcfa5733-e6cf-4d11-ac14-896ec86966e2",
+      "name": "Check verify token (Circle)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Circle webhook secret"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "09d6a6b3-9cfe-4e7e-a386-a33c0e71170b",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "adc4dda7-afd8-482b-994d-3af3f73b83ce",
+      "name": "Token OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.challenge }}",
+        "options": {}
+      },
+      "id": "6a209c4f-46cb-47c9-9b5c-d05a5a5c62e0",
+      "name": "Answer challenge",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1540,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "forbidden",
+        "options": {
+          "responseCode": 403
+        }
+      },
+      "id": "993991a8-baf3-431d-9fb5-307699c21952",
+      "name": "Reject",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1540,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Settings').first().json.circle_url }}/api/whatsapp/meta",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ signature: $json.signature, raw_b64: $json.raw_b64 }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "c7b73847-ba76-4d12-993e-af8d71333156",
+      "name": "Check signature & read messages (Circle)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        320
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Circle webhook secret"
+        }
+      },
+      "notes": "Circle verifies X-Hub-Signature-256 (WHATSAPP_APP_SECRET) and returns the patient messages."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "31a94c8b-797b-4c46-895e-479f2d81fa91",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d99865b9-7114-4c0a-924b-550660a28c80",
+      "name": "Signature OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "messages",
+        "options": {}
+      },
+      "id": "ab90a892-8b59-4b29-9d93-76dcff1d1fee",
+      "name": "One per message",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Settings').first().json.circle_url }}/api/whatsapp/inbound",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "fcb2cdf7-35c4-4a0d-a4d8-f8a522808b49",
+      "name": "Ask Circle assistant",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Circle webhook secret"
+        }
+      },
+      "notes": "Emergency check, booking tools, cost caps and the AI reply all run in Circle."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "db1d6e85-3ee2-470c-a930-700ebe94ecc8",
               "leftValue": "={{ $json.reply }}",
               "rightValue": "",
               "operator": {
@@ -172,27 +344,37 @@
           ]
         },
         "options": {}
-      }
+      },
+      "id": "a1bf5bcc-1c98-40aa-b375-fd35e9dab739",
+      "name": "Has a reply?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        300
+      ]
     },
     {
-      "id": "reply",
-      "name": "Send reply on WhatsApp",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        880,
-        240
-      ],
       "parameters": {
         "method": "POST",
-        "url": "=https://graph.facebook.com/v21.0/{{ $('Extract messages').item.json.phone_number_id }}/messages",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('One per message').item.json.phone_number_id }}/messages",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Extract messages').item.json.from }}\",\n  \"type\": \"text\",\n  \"text\": { \"preview_url\": false, \"body\": {{ JSON.stringify($json.reply) }} }\n}",
-        "options": {}
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('One per message').item.json.from }}\",\n  \"type\": \"text\",\n  \"text\": { \"preview_url\": false, \"body\": {{ JSON.stringify($json.reply) }} }\n}",
+        "options": {
+          "timeout": 60000
+        }
       },
+      "id": "e5851770-8267-4b67-b1fd-0fa362e72f9a",
+      "name": "Send reply on WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        280
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "",
@@ -206,14 +388,76 @@
       "main": [
         [
           {
-            "node": "Verify token matches?",
+            "node": "Settings",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Verify token matches?": {
+    "WhatsApp message (POST)": {
+      "main": [
+        [
+          {
+            "node": "Answer Meta 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read raw body": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Meta verification?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meta verification?": {
+      "main": [
+        [
+          {
+            "node": "Check verify token (Circle)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check signature & read messages (Circle)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check verify token (Circle)": {
+      "main": [
+        [
+          {
+            "node": "Token OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token OK?": {
       "main": [
         [
           {
@@ -231,18 +475,30 @@
         ]
       ]
     },
-    "WhatsApp message (POST)": {
+    "Check signature & read messages (Circle)": {
       "main": [
         [
           {
-            "node": "Extract messages",
+            "node": "Signature OK?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Extract messages": {
+    "Signature OK?": {
+      "main": [
+        [
+          {
+            "node": "One per message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "One per message": {
       "main": [
         [
           {
@@ -274,6 +530,17 @@
           }
         ],
         []
+      ]
+    },
+    "Answer Meta 200": {
+      "main": [
+        [
+          {
+            "node": "Read raw body",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },

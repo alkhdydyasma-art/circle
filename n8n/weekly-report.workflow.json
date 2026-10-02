@@ -3,34 +3,65 @@
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [ { "field": "cronExpression", "expression": "0 7 * * 0" } ] }
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * 0"
+            }
+          ]
+        }
       },
       "id": "7a1b2c3d-0001-4000-8000-000000000001",
       "name": "Sunday 7:00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "notes": "Uses the n8n instance timezone (GENERIC_TIMEZONE=Asia/Riyadh in the Circle deploy kit)."
     },
     {
       "parameters": {
         "assignments": {
           "assignments": [
-            { "id": "a1", "name": "owner_whatsapp", "value": "9665XXXXXXXX", "type": "string" }
+            {
+              "id": "a1",
+              "name": "owner_whatsapp",
+              "value": "9665XXXXXXXX",
+              "type": "string"
+            },
+            {
+              "id": "4eab6d63-87bb-4056-bd2f-9dba6e94c69f",
+              "name": "circle_url",
+              "value": "https://circle-mu-eight.vercel.app",
+              "type": "string"
+            },
+            {
+              "id": "4baee3aa-0677-4a1e-b72b-f87c3cd13f67",
+              "name": "phone_number_id",
+              "value": "PUT_PHONE_NUMBER_ID_HERE",
+              "type": "string"
+            }
           ]
         },
-        "options": {}
+        "options": {},
+        "includeOtherFields": true
       },
       "id": "7a1b2c3d-0002-4000-8000-000000000002",
       "name": "Settings",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [220, 0],
+      "position": [
+        220,
+        0
+      ],
       "notes": "The owner's WhatsApp number, international format without + (e.g. 966551234567)."
     },
     {
       "parameters": {
-        "url": "={{ $env.CIRCLE_URL }}/api/v1/reports?days=7",
+        "url": "={{ $('Settings').first().json.circle_url }}/api/v1/reports?days=7",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {}
@@ -39,13 +70,22 @@
       "name": "Get weekly summary",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [440, 0],
-      "notes": "Credential: Header Auth — Name: Authorization, Value: Bearer ck_… (the clinic's key from Circle → الأتمتة)"
+      "position": [
+        440,
+        0
+      ],
+      "notes": "Credential: Header Auth — Name: Authorization, Value: Bearer ck_… (the clinic's key from Circle → الأتمتة)",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Circle clinic key"
+        }
+      }
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://graph.facebook.com/v21.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Settings').first().json.phone_number_id }}/messages",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
@@ -57,14 +97,55 @@
       "name": "Send to owner (WhatsApp template)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [660, 0],
-      "notes": "Credential: Header Auth — Name: Authorization, Value: Bearer <Meta access token>. Needs the approved 'weekly_report' template (see n8n/README.md)."
+      "position": [
+        660,
+        0
+      ],
+      "notes": "Credential: Header Auth — Name: Authorization, Value: Bearer <Meta access token>. Needs the approved 'weekly_report' template (see n8n/README.md).",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "WhatsApp Cloud API"
+        }
+      }
     }
   ],
   "connections": {
-    "Sunday 7:00": { "main": [ [ { "node": "Settings", "type": "main", "index": 0 } ] ] },
-    "Settings": { "main": [ [ { "node": "Get weekly summary", "type": "main", "index": 0 } ] ] },
-    "Get weekly summary": { "main": [ [ { "node": "Send to owner (WhatsApp template)", "type": "main", "index": 0 } ] ] }
+    "Sunday 7:00": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Get weekly summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get weekly summary": {
+      "main": [
+        [
+          {
+            "node": "Send to owner (WhatsApp template)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1" }
+  "settings": {
+    "executionOrder": "v1"
+  }
 }
