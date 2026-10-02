@@ -4,7 +4,7 @@
 
 import type { Locale } from "@/i18n";
 
-export const LAST_UPDATED = "2026-09-25";
+export const LAST_UPDATED = "2026-10-02";
 
 export type LegalSection = { id: string; title: string; body: (string | string[])[] };
 export type LegalDoc = { title: string; intro: string; sections: LegalSection[] };
@@ -249,7 +249,7 @@ const termsAr: LegalDoc = {
     {
       id: "fees",
       title: "الرسوم",
-      body: ["الاشتراك 1,299 ريال سعودي شهرياً لكل عيادة ما لم يُتفق كتابياً على غير ذلك، ويُدفع مقدماً عبر بوابة الدفع ميسّر ويتجدد شهرياً. تكاليف رسائل واتساب لدى Meta تُحتسب على حساب العيادة ما لم يُتفق على غير ذلك. الإلغاء والاسترجاع وفق سياسة الاسترجاع والإلغاء."],
+      body: ["تبدأ العيادة بتجربة مجانية مدتها 14 يوماً بدون أي دفع. بعدها يكون الاشتراك الشهري حسب الباقة المختارة (الأساسية 799 ريال، الاحترافية 1,299 ريال، والفروع حسب الاتفاق) ما لم يُتفق كتابياً على غير ذلك، ويُدفع مقدماً عبر بوابة الدفع ميسّر ويتجدد شهرياً، أو سنوياً بخصم يعادل شهرين. تكاليف رسائل واتساب لدى Meta تُحتسب على حساب العيادة ما لم يُتفق على غير ذلك. الإلغاء والاسترجاع وفق سياسة الاسترجاع والإلغاء."],
     },
     {
       id: "availability",
@@ -288,7 +288,7 @@ const termsEn: LegalDoc = {
     { id: "patients", title: "Patient data", body: ["The clinic is the controller of its patients' data and is responsible for its lawful basis and for informing patients. Circle processes that data as a processor under the privacy policy and the contract."] },
     { id: "assistant", title: "The AI assistant", body: ["The assistant organises appointments and answers general clinic questions. It gives no diagnosis or medical advice and hands clinical questions to the clinic's team."] },
     { id: "use", title: "Acceptable use", body: [["No spam or unlawful content.", "No attempts to access another clinic's data or disrupt the platform.", "Follow WhatsApp Business policies when messaging."]] },
-    { id: "fees", title: "Fees", body: ["The subscription is SAR 1,299 per clinic per month unless agreed otherwise in writing, paid in advance through the Moyasar payment gateway and renewed monthly. WhatsApp messaging costs charged by Meta are billed to the clinic's account unless agreed otherwise. Cancellations and refunds follow the refund & cancellation policy."] },
+    { id: "fees", title: "Fees", body: ["Clinics start with a 14-day free trial with no payment. After that the monthly price depends on the plan (Basic SAR 799, Pro SAR 1,299, Branches as agreed) unless agreed otherwise in writing, paid in advance through the Moyasar payment gateway and renewed monthly — or yearly with two months free. WhatsApp messaging costs charged by Meta are billed to the clinic's account unless agreed otherwise. Cancellations and refunds follow the refund & cancellation policy."] },
     { id: "availability", title: "Availability", body: ["We take reasonable care to keep the platform available; it may pause for maintenance or reasons beyond our control, and we announce scheduled maintenance in advance where possible."] },
     { id: "ip", title: "Intellectual property", body: ["The platform, its templates and software belong to Circle. Clinic content (logo, text, images, data) belongs to the clinic, which grants Circle the right to use it only to provide the service."] },
     { id: "end", title: "Ending a subscription", body: ["When a subscription ends, the clinic receives a usable copy of its data, which is then deleted from the platform per the contract and privacy policy."] },
@@ -304,8 +304,12 @@ const refundAr: LegalDoc = {
   sections: [
     {
       id: "plan",
-      title: "الاشتراك والدفع",
-      body: ["الاشتراك 1,299 ريال سعودي شهرياً لكل عيادة، يُدفع مقدماً عن كل شهر ويتجدد تلقائياً ما لم يُلغَ. يبدأ الشهر من تاريخ تفعيل حساب العيادة."],
+      title: "التجربة والباقات والدفع",
+      body: [
+        "تبدأ كل عيادة بتجربة مجانية مدتها 14 يوماً بدون دفع وبدون بطاقة، ولا يُخصم أي مبلغ خلالها. إذا لم تشترك العيادة بعد التجربة يتوقف حسابها دون أي التزام.",
+        "بعد التجربة يكون الاشتراك حسب الباقة: الأساسية 799 ريال، الاحترافية 1,299 ريال شهرياً، والفروع حسب الاتفاق. يُدفع مقدماً ويتجدد تلقائياً ما لم يُلغَ، ويمكن الدفع سنوياً بخصم يعادل شهرين.",
+        "عرض المؤسسين: أول 10 عيادات تحصل على الباقة الاحترافية بسعر 999 ريال شهرياً ثابت لمدة سنة من بدء الاشتراك المدفوع.",
+      ],
     },
     {
       id: "cancel",
@@ -320,7 +324,7 @@ const refundAr: LegalDoc = {
       id: "refund",
       title: "حالات استرداد المبلغ",
       body: [[
-        "استرداد كامل لأول دفعة إذا طلبت العيادة الإلغاء خلال 7 أيام من الدفع ولم يُفعَّل موقعها أو حسابها بعد.",
+        "استرداد كامل لأول دفعة إذا طلبت العيادة الإلغاء خلال 7 أيام من الدفع.", "عند الدفع السنوي: استرداد الأشهر الكاملة المتبقية إذا أُلغي الاشتراك خلال أول 30 يوماً.",
         "استرداد كامل لأي مبلغ خُصم بالخطأ أو مكرراً.",
         "استرداد جزئي بنسبة الأيام المتبقية إذا تعذّر تقديم الخدمة بسبب خلل من جهتنا لم يُعالج خلال 72 ساعة من إبلاغنا.",
       ]],
@@ -350,9 +354,13 @@ const refundEn: LegalDoc = {
   title: "Refund & Cancellation Policy",
   intro: "This policy explains how a clinic cancels its Circle subscription and when payments are refunded. It applies to online payments through the Moyasar payment gateway.",
   sections: [
-    { id: "plan", title: "Subscription and payment", body: ["The subscription is SAR 1,299 per clinic per month, paid in advance for each month and renewed automatically unless cancelled. The month starts on the date the clinic's account is activated."] },
+    { id: "plan", title: "Trial, plans and payment", body: [
+      "Every clinic starts with a 14-day free trial with no payment and no card; nothing is charged during the trial. If the clinic does not subscribe afterwards, its account simply stops with no obligation.",
+      "After the trial the price depends on the plan: Basic SAR 799, Pro SAR 1,299 per month, Branches as agreed. Paid in advance and renewed automatically unless cancelled; yearly billing gives two months free.",
+      "Founding offer: the first 10 clinics get the Pro plan at SAR 999 per month, locked for one year from the start of the paid subscription.",
+    ] },
     { id: "cancel", title: "Cancellation", body: [["A clinic can cancel at any time by e-mail or WhatsApp to Circle.", "Cancellation takes effect at the end of the paid month; the service stays available until then and nothing more is charged.", "When the subscription ends we hand the clinic a usable copy of its data, which is then deleted per the privacy policy."]] },
-    { id: "refund", title: "When you get a refund", body: [["Full refund of the first payment if the clinic cancels within 7 days of paying and its website or account has not been activated yet.", "Full refund of any amount charged by mistake or twice.", "Pro-rata refund of the remaining days if the service could not be provided because of a fault on our side not fixed within 72 hours of being reported."]] },
+    { id: "refund", title: "When you get a refund", body: [["Full refund of the first payment if the clinic cancels within 7 days of paying.", "Yearly billing: refund of the remaining full months if cancelled within the first 30 days.", "Full refund of any amount charged by mistake or twice.", "Pro-rata refund of the remaining days if the service could not be provided because of a fault on our side not fixed within 72 hours of being reported."]] },
     { id: "no-refund", title: "When payments are not refunded", body: [["Days already used in the current month when cancelling for reasons other than a service fault.", "WhatsApp messaging costs charged by Meta, as they are paid to a third party."]] },
     { id: "how", title: "How and when", body: ["Refunds go back to the original payment method through Moyasar within 14 business days of approval; the time to appear on a statement depends on the card's issuing bank."] },
     { id: "contact", title: "Making a request", body: ["Send cancellation or refund requests with the clinic name and transaction number to Circle's e-mail or WhatsApp shown at the bottom of the page; we reply within two business days."] },

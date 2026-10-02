@@ -222,22 +222,31 @@ const en: Dictionary = {
     ],
   },
   pricing: {
-    eyebrow: "Pricing",
-    title: "One clear price, everything included",
-    plan: "Circle clinic plan",
+    eyebrow: "Plans",
+    title: "Start free, pay once you see results",
+    note: "{trial}-day free trial, no payment and no card. Then a monthly subscription with no long contract — cancel any time.",
     perMonth: "SAR / month",
-    note: "Monthly subscription, no long contract — cancel any time.",
-    features: [
-      "A website for your clinic with online booking",
-      "Instant booking confirmation — no front-desk step",
-      "AI WhatsApp assistant that books, reschedules and cancels",
-      "Automatic reminders that cut no-shows",
-      "Dashboard and doctors' board with team roles",
-      "Performance reports and a weekly WhatsApp summary",
-      "Setup and onboarding help from the Circle team",
+    popular: "Most popular",
+    custom: "Custom",
+    trialCta: "Start your free trial",
+    contactCta: "Contact us",
+    founders: "Founding offer: the first {seats} clinics get the Pro plan for SAR {price}/month, locked for a full year.",
+    annual: "Pay yearly and get two months free.",
+    plans: [
+      {
+        id: "basic", name: "Basic", text: "For clinics that want a digital presence and organised booking.",
+        features: ["A website for your clinic", "Online booking with instant confirmation", "Automatic appointment reminders", "Dashboard with team roles"],
+      },
+      {
+        id: "pro", name: "Pro", text: "Full automation: the AI assistant answers and books for you.",
+        features: ["Everything in Basic", "AI WhatsApp assistant that books, reschedules and cancels", "Doctors' board and emergency alerts", "Performance reports and a weekly WhatsApp summary"],
+      },
+      {
+        id: "branches", name: "Branches", text: "For medical groups and multi-branch clinics.",
+        features: ["Everything in Pro", "Multiple branches and doctors", "Dedicated setup and support", "Priced by number of branches"],
+      },
     ],
     fine: "WhatsApp messaging costs charged by Meta are billed to the clinic's account by usage. Online payment through Moyasar.",
-    cta: "Request a demo",
     refund: "Refund & cancellation policy",
   },
   faq: {
@@ -270,7 +279,7 @@ const en: Dictionary = {
       },
       {
         q: "Are there long contracts or hidden fees?",
-        a: "No. The subscription is SAR 1,299 per month with no long contract; cancel any time and it runs to the end of the paid month. Details in the refund & cancellation policy.",
+        a: "No. You start with a 14-day free trial with no payment, then a monthly plan (Basic SAR 799, Pro SAR 1,299) with no long contract — cancel any time. Details in the refund & cancellation policy.",
       },
     ],
   },
