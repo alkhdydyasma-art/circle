@@ -61,6 +61,9 @@ export async function POST(request: Request) {
 
   // Staff handles this chat, or the assistant is off: the message waits in the inbox.
   if (!c.ai_enabled || c.status === "human") return Response.json({ reply: null, conversation_id: c.conversation_id, handled_by: "staff" });
+  // Subscription lapsed (past the grace period): no model calls; messages wait in the inbox.
+  const { data: bill } = await db.rpc("billing_state", { p_clinic: c.clinic_id });
+  if (bill === "expired") return Response.json({ reply: null, conversation_id: c.conversation_id, handled_by: "staff", billing: "expired" });
   if (!(await allow("whatsapp", `${c.clinic_id}:${c.phone}`))) {
     await db.rpc("agent_handoff", { p_conversation: c.conversation_id, p_reason: "Too many messages in an hour" });
     return Response.json({ reply: null, conversation_id: c.conversation_id, handled_by: "staff" });

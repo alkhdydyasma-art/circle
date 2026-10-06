@@ -14,6 +14,7 @@ answer a patient who just wrote).
 | `whatsapp-send.workflow.json` | Internal webhook Circle uses to send a free-text message (front-desk replies from the **المحادثات** inbox). |
 | `ops-monitor.workflow.json` | Every hour calls `POST /api/ops/tick`: recurring errors go to the auto-fix pipeline; fix results are read back. No AI calls. |
 | `ops-summary.workflow.json` | Sundays 8:00 sends the founder the operations summary (`GET /api/ops/summary?days=7`) on WhatsApp. |
+| `billing-reminders.workflow.json` | Daily 9:00: e-mails clinic owners before their trial or subscription ends (and during the 7-day grace), plus a daily digest to Circle (`GET /api/billing/due?days=3`). |
 | `error-reporter.workflow.json` | n8n *Error Workflow*: any failed execution is reported to Circle (`POST /api/ops/report`). Set it as the error workflow of every Circle workflow. |
 | `weekly-report.workflow.json` | Every Sunday 7:00 sends the clinic owner a summary of the past week (`GET /api/v1/reports?days=7`) — numbers only. |
 

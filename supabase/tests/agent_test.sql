@@ -211,6 +211,44 @@ select pg_temp.act_as(null);
 select pg_temp.expect_fail('anon cannot write the ops log', $$select public.ops_record('agent', 'ok')$$);
 reset role;
 
+-- ─── Billing: trial, payments, reminders ─────────────────────────────────────
+reset role;
+select pg_temp.expect_eq('new clinic starts a 14-day trial',
+  $$select public.billing_state('c000000a-0000-0000-0000-000000000000') || ':' ||
+     round(extract(epoch from (select trial_ends_at from public.clinics where id = 'c000000a-0000-0000-0000-000000000000') - now()) / 86400)$$, 'trial:14');
+select pg_temp.act_as('owner@a.sa');
+select pg_temp.expect_fail('clinic cannot extend its own subscription',
+  $$update public.clinics set paid_until = now() + interval '5 years' where id = 'c000000a-0000-0000-0000-000000000000'$$);
+select pg_temp.expect_fail('clinic cannot record payments',
+  $$select public.admin_record_payment('c000000a-0000-0000-0000-000000000000', 'manual', 'x1', 129900, 'monthly')$$);
+select pg_temp.expect_fail('clinic cannot list billing reminders', $$select public.billing_due(3)$$);
+reset role;
+select set_config('request.jwt.claims', '', false);  -- server (service role) context
+select pg_temp.expect_fail('payment below plan price rejected',
+  $$select public.billing_record_payment('c000000a-0000-0000-0000-000000000000', 'tap', 'chg_low', 50000, 'monthly')$$);
+select pg_temp.expect_eq('monthly payment recorded',
+  $$select public.billing_record_payment('c000000a-0000-0000-0000-000000000000', 'tap', 'chg_1', 129900, 'monthly') ->> 'duplicate'$$, 'false');
+select pg_temp.expect_eq('payment activates the subscription', $$select public.billing_state('c000000a-0000-0000-0000-000000000000')$$, 'active');
+select pg_temp.expect_eq('same gateway payment twice is ignored',
+  $$select (public.billing_record_payment('c000000a-0000-0000-0000-000000000000', 'tap', 'chg_1', 129900, 'monthly') ->> 'duplicate')
+     || ':' || (select count(*) from public.subscription_payments)$$, 'true:1');
+select pg_temp.expect_eq('yearly payment extends from the current end',
+  $$select round(extract(epoch from ((public.billing_record_payment('c000000a-0000-0000-0000-000000000000', 'manual', 'trf_9', 1299000, 'yearly') ->> 'paid_until')::timestamptz - now())) / 86400) between 393 and 397$$, 'true');
+update public.clinics set founder = true where id = 'c000000b-0000-0000-0000-000000000000';
+select pg_temp.expect_eq('founder price accepted',
+  $$select public.billing_record_payment('c000000b-0000-0000-0000-000000000000', 'tap', 'chg_f', 99900, 'monthly') ->> 'duplicate'$$, 'false');
+update public.clinics set paid_until = now() + interval '2 days' where id = 'c000000b-0000-0000-0000-000000000000';
+select pg_temp.expect_eq('reminder lists clinic ending soon with owner contact',
+  $$select string_agg((x ->> 'clinic') || '/' || (x ->> 'days_left') || '/' || (x ->> 'owner_email'), ',') from jsonb_array_elements(public.billing_due(3)) x$$,
+  'Clinic B/2/owner@b.sa');
+update public.clinics set paid_until = now() - interval '3 days' where id = 'c000000b-0000-0000-0000-000000000000';
+select pg_temp.expect_eq('grace period after the end', $$select public.billing_state('c000000b-0000-0000-0000-000000000000')$$, 'grace');
+update public.clinics set paid_until = now() - interval '10 days', trial_ends_at = now() - interval '30 days' where id = 'c000000b-0000-0000-0000-000000000000';
+select pg_temp.expect_eq('expired after grace', $$select public.billing_state('c000000b-0000-0000-0000-000000000000')$$, 'expired');
+select pg_temp.act_as('owner@b.sa');
+select pg_temp.expect_eq('clinic manager sees own payments only', $$select count(*)::text from public.subscription_payments$$, '1');
+reset role;
+
 -- ─── Reports ────────────────────────────────────────────────────────────────
 select pg_temp.act_as('owner@a.sa');
 select pg_temp.expect_eq('owner gets clinic report',

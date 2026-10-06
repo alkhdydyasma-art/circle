@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ExternalLink, Phone, Siren } from "lucide-react";
+import { CreditCard, ExternalLink, Phone, Siren } from "lucide-react";
+import { billingStatus } from "@/lib/billing";
+import { whatsappUrl } from "@/lib/contact";
 import { acknowledgeEmergency } from "@/app/actions/agent";
 import { AlertWatcher } from "@/components/portal/AlertWatcher";
 import { hasLocale } from "@/i18n";
-import { getPortalDictionary } from "@/i18n/portal";
+import { fill, getPortalDictionary } from "@/i18n/portal";
 import { getClinicContext } from "@/lib/clinic-context";
 import { createClient } from "@/lib/supabase/server";
 import { ClinicNav, type NavKey } from "@/components/portal/ClinicNav";
@@ -37,6 +39,16 @@ export default async function ClinicLayout({ children, params }: LayoutProps<"/[
     urgent = (e ?? []) as typeof urgent;
   }
   const em = t.dash.emergency;
+  // Subscription notice for owners/managers: trial countdown, renewal, grace and expiry.
+  const bill = billingStatus(ctx.clinic);
+  const b = t.billing;
+  const showBill = ctx.canManage && !ctx.isAdmin && (bill.state === "trial" || bill.state === "grace" || bill.state === "expired" || (bill.state === "active" && bill.daysLeft <= 7));
+  const graceEnd = bill.ends ? new Date(bill.ends.getTime() + 7 * 86400_000) : null;
+  const billText = bill.state === "trial" ? fill(b.trialLeft, { days: bill.daysLeft })
+    : bill.state === "active" ? fill(b.paidLeft, { days: bill.daysLeft })
+    : bill.state === "grace" && graceEnd ? fill(b.grace, { date: new Intl.DateTimeFormat(lang === "ar" ? "ar-SA-u-nu-latn-ca-gregory" : "en-GB", { dateStyle: "medium" }).format(graceEnd) })
+    : b.expired;
+  const payHref = whatsappUrl(fill(b.payMsg, { clinic: ctx.clinic.name }));
   const ago = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
   const items = keys.map((key) => ({
     key, label: key === "schedule" && !ctx.frontDesk ? t.dash.schedule.mine : t.dash.nav[key], href: key === "today" ? base : `${base}/${key}`, badge: key === "conversations" ? waiting : undefined,
@@ -61,6 +73,13 @@ export default async function ClinicLayout({ children, params }: LayoutProps<"/[
       </aside>
       <div className="min-w-0">
         {ctx.frontDesk && <AlertWatcher clinicId={id} emergencies={urgent.length} waiting={waiting} />}
+        {showBill && (
+          <div role={bill.state === "expired" ? "alert" : "status"} className={`mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm ${
+            bill.state === "expired" ? "border-rose-500/60 bg-rose-500/10" : bill.state === "grace" ? "border-amber-400/70 bg-amber-400/10" : "border-line bg-card"}`}>
+            <p className="flex items-center gap-2"><CreditCard className="size-4 shrink-0 text-muted" />{billText}</p>
+            <a href={payHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center rounded-lg bg-teal px-3 font-semibold text-white">{b.pay}</a>
+          </div>
+        )}
         {urgent.length > 0 && (
           <div role="alert" className="mb-6 space-y-3">
             {urgent.map((u) => (

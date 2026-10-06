@@ -4,7 +4,10 @@ import { hasLocale } from "@/i18n";
 import { fill, getPortalDictionary } from "@/i18n/portal";
 import { createClient } from "@/lib/supabase/server";
 import { updateClinicAdmin, updateLeadStatus } from "@/app/actions/portal";
+import { updateBillingAdmin } from "@/app/actions/billing";
 import { ActivateLeadForm } from "@/components/portal/Forms";
+import { RecordPaymentForm } from "@/components/portal/BillingForms";
+import { billingStatus, planPrice } from "@/lib/billing";
 import { Badge, Card, btnCls, statusTone, fieldCls } from "@/components/portal/ui";
 
 const LEAD_STATUSES = ["new", "contacted", "demo_scheduled", "won", "lost"] as const;
@@ -17,7 +20,10 @@ type Lead = {
 type Clinic = {
   id: string; name: string; city: string; status: "pending" | "active" | "suspended";
   plan: "starter" | "standard" | "pro";
+  trial_ends_at: string | null; paid_until: string | null; billing_cycle: "monthly" | "yearly";
+  founder: boolean; billing_exempt: boolean;
 };
+const billTone = { trial: "amber", active: "teal", grace: "amber", expired: "rose", exempt: "muted" } as const;
 
 export default async function AdminPage({ params }: PageProps<"/[lang]/portal/admin">) {
   const { lang } = await params;
@@ -33,7 +39,9 @@ export default async function AdminPage({ params }: PageProps<"/[lang]/portal/ad
     supabase.from("leads").select("*").order("created_at", { ascending: false }).limit(200).returns<Lead[]>(),
     supabase.from("clinics").select("*").order("created_at", { ascending: false }).returns<Clinic[]>(),
   ]);
-  const date = new Intl.DateTimeFormat(lang === "ar" ? "ar-SA" : "en-GB", { dateStyle: "medium" });
+  const date = new Intl.DateTimeFormat(lang === "ar" ? "ar-SA-u-nu-latn-ca-gregory" : "en-GB", { dateStyle: "medium" });
+  const b = t.billing;
+  const ymd = (iso: string | null) => (iso ? new Date(new Date(iso).getTime() + 3 * 3600_000).toISOString().slice(0, 10) : "");
 
   return (
     <div className="space-y-8">
@@ -43,22 +51,48 @@ export default async function AdminPage({ params }: PageProps<"/[lang]/portal/ad
         {!clinics?.length ? <p className="text-muted">{t.admin.empty}</p> : (
           <ul className="divide-y divide-line">
             {clinics.map((c) => (
-              <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <Link href={`/${lang}/portal/clinic/${c.id}`} className="font-medium hover:text-teal">
-                  {c.name} <span className="text-sm text-muted">· {c.city}</span>
-                </Link>
-                <form key={`${c.status}-${c.plan}`} action={updateClinicAdmin} className="flex flex-wrap items-center gap-2">
+              <li key={c.id} className="space-y-3 py-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <Link href={`/${lang}/portal/clinic/${c.id}`} className="font-medium hover:text-teal">
+                      {c.name} <span className="text-sm text-muted">· {c.city}</span>
+                    </Link>
+                    {(() => {
+                      const s = billingStatus(c);
+                      return (
+                        <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+                          <Badge tone={billTone[s.state]}>{b.state[s.state]}</Badge>
+                          {s.ends && s.state !== "exempt" && <span>{s.state === "trial" ? b.trialUntil : b.until} {date.format(s.ends)}</span>}
+                          {c.founder && <Badge tone="teal">{b.founder}</Badge>}
+                        </p>
+                      );
+                    })()}
+                  </div>
+                  <form key={`${c.status}-${c.plan}`} action={updateClinicAdmin} className="flex flex-wrap items-center gap-2">
+                    <input type="hidden" name="lang" value={lang} />
+                    <input type="hidden" name="id" value={c.id} />
+                    <Badge tone={statusTone[c.status]}>{t.clinicStatus[c.status]}</Badge>
+                    <select name="status" defaultValue={c.status} aria-label={t.admin.cols.status} className={fieldCls}>
+                      {(["pending", "active", "suspended"] as const).map((s) => <option key={s} value={s}>{t.clinicStatus[s]}</option>)}
+                    </select>
+                    <select name="plan" defaultValue={c.plan} aria-label={t.admin.cols.plan} className={fieldCls}>
+                      {(["starter", "standard", "pro"] as const).map((p) => <option key={p} value={p}>{t.plans[p]}</option>)}
+                    </select>
+                    <button className={btnCls}>{t.admin.save}</button>
+                  </form>
+                </div>
+                <form key={`${c.founder}-${c.billing_exempt}-${c.trial_ends_at}`} action={updateBillingAdmin} className="flex flex-wrap items-center gap-3 text-sm">
                   <input type="hidden" name="lang" value={lang} />
                   <input type="hidden" name="id" value={c.id} />
-                  <Badge tone={statusTone[c.status]}>{t.clinicStatus[c.status]}</Badge>
-                  <select name="status" defaultValue={c.status} aria-label={t.admin.cols.status} className={fieldCls}>
-                    {(["pending", "active", "suspended"] as const).map((s) => <option key={s} value={s}>{t.clinicStatus[s]}</option>)}
-                  </select>
-                  <select name="plan" defaultValue={c.plan} aria-label={t.admin.cols.plan} className={fieldCls}>
-                    {(["starter", "standard", "pro"] as const).map((p) => <option key={p} value={p}>{t.plans[p]}</option>)}
-                  </select>
+                  <label className="flex items-center gap-1.5"><input type="checkbox" name="founder" defaultChecked={c.founder} />{b.founder}</label>
+                  <label className="flex items-center gap-1.5"><input type="checkbox" name="exempt" defaultChecked={c.billing_exempt} />{b.exempt}</label>
+                  <label className="flex items-center gap-1.5">{b.trialEnds}<input type="date" name="trial" defaultValue={ymd(c.trial_ends_at)} className={fieldCls} /></label>
                   <button className={btnCls}>{t.admin.save}</button>
                 </form>
+                {!c.billing_exempt && (
+                  <RecordPaymentForm lang={lang} t={t} clinicId={c.id}
+                    price={{ monthly: planPrice(c.plan, "monthly", c.founder), yearly: planPrice(c.plan, "yearly", c.founder) }} />
+                )}
               </li>
             ))}
           </ul>

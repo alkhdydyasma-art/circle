@@ -1,0 +1,170 @@
+{
+  "name": "Circle — Billing reminders",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "8dcbca90-65a2-43d0-9e14-6047aae44d25",
+      "name": "Every day 9:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s0",
+              "name": "circle_url",
+              "value": "https://circle-mu-eight.vercel.app",
+              "type": "string"
+            },
+            {
+              "id": "s1",
+              "name": "founder_email",
+              "value": "PUT_YOUR_EMAIL_HERE",
+              "type": "string"
+            },
+            {
+              "id": "s2",
+              "name": "circle_whatsapp",
+              "value": "966530689203",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b7dae15f-4544-4e4a-b444-4af2fef91419",
+      "name": "Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "notes": "Your settings for this workflow — edit the values here."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Settings').first().json.circle_url }}/api/billing/due?days=3",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "cadea3b2-dcfa-4c0b-9946-e8327c831a5a",
+      "name": "Get due clinics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "notes": "Credential: Circle webhook secret (Header Auth — x-circle-secret).",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Circle webhook secret"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// One e-mail per clinic owner on the days that matter, plus one digest for Circle.\nconst s = $('Settings').first().json;\nconst res = $('Get due clinics').first().json;\nconst out = [];\nconst sar = (v) => v == null ? 'حسب الاتفاق' : `${v.toLocaleString('en')} ريال`;\nconst pay = `للتجديد تواصل معنا واتساب: https://wa.me/${s.circle_whatsapp}`;\nfor (const c of res.clinics || []) {\n  const since = Math.floor((Date.now() - new Date(c.ends_at).getTime()) / 86400000);\n  let subject = null, body = null;\n  if ((c.state === 'trial') && [3, 1].includes(c.days_left)) {\n    subject = `تجربتك في سيركل تنتهي بعد ${c.days_left} يوم`;\n    body = `أهلاً ${c.clinic} 🌿\\n\\nتجربتك المجانية في سيركل تنتهي بعد ${c.days_left} يوم.\\nللاستمرار بدون توقف للمساعد الذكي والحجوزات: ${sar(c.price_sar)} شهرياً.\\n\\n${pay}`;\n  } else if (c.state === 'active' && [3, 1].includes(c.days_left)) {\n    subject = `تجديد اشتراك سيركل بعد ${c.days_left} يوم`;\n    body = `أهلاً ${c.clinic} 🌿\\n\\nاشتراكك في سيركل ينتهي بعد ${c.days_left} يوم.\\nمبلغ التجديد: ${sar(c.price_sar)}.\\n\\n${pay}`;\n  } else if (c.state === 'grace' && [1, 4, 6].includes(since)) {\n    subject = 'اشتراك سيركل انتهى — المهلة سارية';\n    body = `أهلاً ${c.clinic}\\n\\nانتهت مدة اشتراكك، وعندك مهلة ${7 - since} يوم قبل إيقاف المساعد الذكي على واتساب.\\n\\n${pay}`;\n  } else if (c.state === 'expired' && since === 8) {\n    subject = 'توقف المساعد الذكي في سيركل';\n    body = `أهلاً ${c.clinic}\\n\\nتوقف المساعد الذكي لانتهاء الاشتراك. رسائل المرضى ما زالت تصل لصندوق المحادثات في لوحتك، وبياناتك محفوظة.\\nجدّد ويرجع المساعد فوراً.\\n\\n${pay}`;\n  }\n  if (subject && c.owner_email) out.push({ json: { to: c.owner_email, subject, body } });\n}\nconst list = (res.clinics || []).map((c) => `• ${c.clinic} — ${c.state} — ${c.days_left} يوم — ${sar(c.price_sar)} — ${c.phone || ''} ${c.owner_email || ''}`).join('\\n');\nif (list) out.push({ json: { to: s.founder_email, subject: `سيركل: ${res.count} عيادة تحتاج متابعة دفع`, body: `${list}\\n\\nسجّل أي دفعة من: ${s.circle_url}/ar/portal/admin` } });\nreturn out;"
+      },
+      "id": "03da7980-8e5a-4922-af4d-7f756207f218",
+      "name": "Build e-mails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "98d23a4e-f147-4122-80a3-f05511d7ee24",
+      "name": "Send e-mail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        0
+      ],
+      "webhookId": "5b1d82dd-f3f7-40fa-b70b-30cc29a5fb45",
+      "notes": "Credential: your Gmail account (same as the New clinic request workflow)."
+    }
+  ],
+  "connections": {
+    "Every day 9:00": {
+      "main": [
+        [
+          {
+            "node": "Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Get due clinics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get due clinics": {
+      "main": [
+        [
+          {
+            "node": "Build e-mails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build e-mails": {
+      "main": [
+        [
+          {
+            "node": "Send e-mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
