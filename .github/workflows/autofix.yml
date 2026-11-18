@@ -82,7 +82,7 @@ jobs:
           fi
           echo "changed=true" >> "$GITHUB_OUTPUT"
           if git diff --name-only | grep -q '^\.github/'; then echo "Fix touched .github/ — refused"; exit 1; fi
-          npx tsc --noEmit
+          npm run typecheck
           npm run lint
           npm test
           bash supabase/tests/run.sh | tee "$RUNNER_TEMP/sql.log"

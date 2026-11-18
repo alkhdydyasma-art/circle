@@ -31,6 +31,7 @@ services:
       # Meta webhook: verify token (you choose it) and app secret. n8n asks Circle to check them.
       WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-}
       WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
+      MOYASAR_SECRET_KEY: ${MOYASAR_SECRET_KEY:-}
       # Auto-fix pipeline: Circle opens GitHub issues for recurring errors (optional).
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       GITHUB_REPO: ${GITHUB_REPO:-}

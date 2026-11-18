@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { createServiceClient } from "@/lib/supabase/server";
 import { createIssue, getIssue, githubConfigured, issueComments } from "@/lib/github";
+import { CHECKOUT_COLS, moyasarConfigured, settleCheckout } from "@/lib/moyasar";
 import { recordOps } from "@/lib/ops";
 import { fromN8n } from "@/lib/whatsapp";
 
@@ -61,7 +62,16 @@ export async function POST(request: Request) {
 
 async function tick() {
   const db = createServiceClient();
-  const report = { slow: false, sent: [] as number[], updated: [] as string[], errors: [] as string[] };
+  const report = { slow: false, settled: 0, sent: [] as number[], updated: [] as string[], errors: [] as string[] };
+
+  // 0. Online payments whose return page and callback were both missed (closed tab, outage).
+  if (moyasarConfigured()) {
+    const { data: pending } = await db.from("billing_checkouts").select(CHECKOUT_COLS).eq("status", "pending")
+      .not("invoice_id", "is", null).gte("created_at", new Date(Date.now() - 3 * 86400_000).toISOString()).limit(50);
+    for (const c of pending ?? []) {
+      try { if ((await settleCheckout(c)) === "paid") report.settled++; } catch (err) { report.errors.push(err instanceof Error ? err.message : String(err)); }
+    }
+  }
 
   // 1. Optimisation: sustained slow replies (p95 above 20s over the last day, 20+ replies).
   const { data: lat } = await db.from("ops_events").select("latency_ms")

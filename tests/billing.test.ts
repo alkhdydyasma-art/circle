@@ -25,3 +25,24 @@ test("billing states", () => {
   assert.equal(s(now - 30 * day, now - 10 * day).state, "expired");
   assert.equal(s(null, null, true).state, "exempt");
 });
+
+test("Moyasar invoice is accepted only when paid in full, in SAR, for this checkout", async () => {
+  const { invoiceVerdict } = await import("../src/lib/billing");
+  const c = { id: "chk-1", amount_halalas: 99900 };
+  const inv = { status: "paid", amount: 99900, currency: "SAR", metadata: { checkout: "chk-1" } };
+  assert.equal(invoiceVerdict(inv, c), "paid");
+  assert.equal(invoiceVerdict({ ...inv, status: "initiated" }, c), "pending");
+  assert.equal(invoiceVerdict({ ...inv, status: "expired" }, c), "closed");
+  assert.equal(invoiceVerdict({ ...inv, amount: 100 }, c), "mismatch");
+  assert.equal(invoiceVerdict({ ...inv, currency: "USD" }, c), "mismatch");
+  assert.equal(invoiceVerdict({ ...inv, metadata: { checkout: "other" } }, c), "mismatch");
+  assert.equal(invoiceVerdict({ ...inv, metadata: null }, c), "paid");
+});
+
+test("callback ids come from invoice callbacks and payment webhooks only", async () => {
+  const { notificationInvoiceIds } = await import("../src/lib/billing");
+  assert.deepEqual(notificationInvoiceIds({ id: "inv_123456" }), ["inv_123456"]);
+  assert.deepEqual(notificationInvoiceIds({ type: "payment_paid", data: { id: "pay_1", invoice_id: "inv_999999" } }), ["inv_999999"]);
+  assert.deepEqual(notificationInvoiceIds({ id: "x'; drop" }), []);
+  assert.deepEqual(notificationInvoiceIds(null), []);
+});

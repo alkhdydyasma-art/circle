@@ -222,6 +222,9 @@ select pg_temp.expect_fail('clinic cannot extend its own subscription',
 select pg_temp.expect_fail('clinic cannot record payments',
   $$select public.admin_record_payment('c000000a-0000-0000-0000-000000000000', 'manual', 'x1', 129900, 'monthly')$$);
 select pg_temp.expect_fail('clinic cannot list billing reminders', $$select public.billing_due(3)$$);
+select pg_temp.expect_fail('clinic cannot read or create online checkouts', $$select count(*) from public.billing_checkouts$$);
+select pg_temp.expect_fail('clinic cannot insert online checkouts',
+  $$insert into public.billing_checkouts (clinic_id, cycle, amount_halalas) values ('c000000a-0000-0000-0000-000000000000', 'monthly', 1)$$);
 reset role;
 select set_config('request.jwt.claims', '', false);  -- server (service role) context
 select pg_temp.expect_fail('payment below plan price rejected',

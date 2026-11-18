@@ -23,3 +23,25 @@ export function billingStatus(c: BillingFields, now = Date.now()): { state: Bill
   if (last > now - GRACE_DAYS * 86400_000) return { state: "grace", ends, daysLeft };
   return { state: "expired", ends, daysLeft };
 }
+
+/**
+ * What to do with a Moyasar invoice re-read for one of our checkouts. "paid" only when it is
+ * paid in SAR, for at least the checkout amount. The invoice id itself was stored when Circle
+ * created it, so metadata is a second check only when Moyasar returns it.
+ */
+export function invoiceVerdict(
+  inv: { status: string; amount: number; currency: string; metadata?: Record<string, string> | null },
+  c: { id: string; amount_halalas: number },
+): "paid" | "pending" | "closed" | "mismatch" {
+  if (inv.status === "expired" || inv.status === "canceled" || inv.status === "failed") return "closed";
+  if (inv.status !== "paid") return "pending";
+  if (inv.currency !== "SAR" || inv.amount < c.amount_halalas || (inv.metadata?.checkout && inv.metadata.checkout !== c.id)) return "mismatch";
+  return "paid";
+}
+
+/** Invoice ids a Moyasar notification may carry: invoice callback (id) or payment webhook (data.invoice_id). */
+export function notificationInvoiceIds(body: unknown): string[] {
+  const b = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
+  const data = (b.data && typeof b.data === "object" ? b.data : {}) as Record<string, unknown>;
+  return [data.invoice_id, b.invoice_id, b.id].filter((v): v is string => typeof v === "string" && /^[\w-]{6,64}$/.test(v));
+}

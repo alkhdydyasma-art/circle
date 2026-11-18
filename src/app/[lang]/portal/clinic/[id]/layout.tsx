@@ -1,7 +1,11 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CreditCard, ExternalLink, Phone, Siren } from "lucide-react";
-import { billingStatus } from "@/lib/billing";
+import { billingStatus, planPrice } from "@/lib/billing";
+import { moyasarConfigured } from "@/lib/moyasar";
+import { startCheckout } from "@/app/actions/billing";
+import { PaymentNotice } from "@/components/portal/PaymentNotice";
 import { whatsappUrl } from "@/lib/contact";
 import { acknowledgeEmergency } from "@/app/actions/agent";
 import { AlertWatcher } from "@/components/portal/AlertWatcher";
@@ -49,6 +53,11 @@ export default async function ClinicLayout({ children, params }: LayoutProps<"/[
     : bill.state === "grace" && graceEnd ? fill(b.grace, { date: new Intl.DateTimeFormat(lang === "ar" ? "ar-SA-u-nu-latn-ca-gregory" : "en-GB", { dateStyle: "medium" }).format(graceEnd) })
     : b.expired;
   const payHref = whatsappUrl(fill(b.payMsg, { clinic: ctx.clinic.name }));
+  // Online payment (Moyasar) when configured and the plan has a fixed price; otherwise WhatsApp.
+  const monthly = planPrice(ctx.clinic.plan, "monthly", ctx.clinic.founder);
+  const yearly = planPrice(ctx.clinic.plan, "yearly", ctx.clinic.founder);
+  const payOnline = moyasarConfigured() && monthly !== null && yearly !== null;
+  const sar = (h: number) => new Intl.NumberFormat("en").format(h / 100);
   const ago = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
   const items = keys.map((key) => ({
     key, label: key === "schedule" && !ctx.frontDesk ? t.dash.schedule.mine : t.dash.nav[key], href: key === "today" ? base : `${base}/${key}`, badge: key === "conversations" ? waiting : undefined,
@@ -77,9 +86,18 @@ export default async function ClinicLayout({ children, params }: LayoutProps<"/[
           <div role={bill.state === "expired" ? "alert" : "status"} className={`mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm ${
             bill.state === "expired" ? "border-rose-500/60 bg-rose-500/10" : bill.state === "grace" ? "border-amber-400/70 bg-amber-400/10" : "border-line bg-card"}`}>
             <p className="flex items-center gap-2"><CreditCard className="size-4 shrink-0 text-muted" />{billText}</p>
-            <a href={payHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center rounded-lg bg-teal px-3 font-semibold text-white">{b.pay}</a>
+            {payOnline ? (
+              <form action={startCheckout} className="flex flex-wrap gap-2">
+                <input type="hidden" name="lang" value={lang} /><input type="hidden" name="clinic" value={id} />
+                <button name="cycle" value="monthly" className="inline-flex min-h-9 items-center rounded-lg bg-teal px-3 font-semibold text-white">{fill(b.payMonthly, { amount: sar(monthly) })}</button>
+                <button name="cycle" value="yearly" className="inline-flex min-h-9 items-center rounded-lg border border-teal px-3 font-semibold text-teal">{fill(b.payYearly, { amount: sar(yearly) })}</button>
+              </form>
+            ) : (
+              <a href={payHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center rounded-lg bg-teal px-3 font-semibold text-white">{b.pay}</a>
+            )}
           </div>
         )}
+        {ctx.canManage && <Suspense><PaymentNotice t={b} contactHref={payHref} /></Suspense>}
         {urgent.length > 0 && (
           <div role="alert" className="mb-6 space-y-3">
             {urgent.map((u) => (

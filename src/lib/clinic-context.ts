@@ -9,7 +9,7 @@ export type ClinicContext = {
   clinic: {
     id: string; name: string; city: string; status: "pending" | "active" | "suspended";
     plan: "starter" | "standard" | "pro";
-    trial_ends_at: string | null; paid_until: string | null; billing_exempt: boolean;
+    trial_ends_at: string | null; paid_until: string | null; billing_exempt: boolean; founder: boolean;
   };
   site: { slug: string; published: boolean; timezone: string };
   role: Role | null;
@@ -30,7 +30,7 @@ export const getClinicContext = cache(async (id: string): Promise<ClinicContext>
   if (!user) notFound();
 
   const [{ data: clinic }, { data: site }, { data: isAdmin }, { data: role }] = await Promise.all([
-    supabase.from("clinics").select("id, name, city, status, plan, trial_ends_at, paid_until, billing_exempt").eq("id", id).maybeSingle(),
+    supabase.from("clinics").select("id, name, city, status, plan, trial_ends_at, paid_until, billing_exempt, founder").eq("id", id).maybeSingle(),
     supabase.from("clinic_sites").select("slug, published, timezone").eq("clinic_id", id).maybeSingle(),
     supabase.rpc("is_platform_admin"),
     supabase.rpc("clinic_role_of", { p_clinic: id }),

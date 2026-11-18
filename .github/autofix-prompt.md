@@ -11,7 +11,7 @@ Do this:
 3. Add a regression test that fails without the fix: `tests/<name>.test.ts` (node:test) or a
    new check in `supabase/tests/*_test.sql`. Never edit or delete existing test cases to make
    them pass.
-4. Run `npx tsc --noEmit`, `npm run lint`, `npm test` and `bash supabase/tests/run.sh`; all must pass.
+4. Run `npm run typecheck`, `npm run lint`, `npm test` and `bash supabase/tests/run.sh`; all must pass.
 5. Write 2–4 sentences in `.autofix/result.md`: root cause, the fix, the test.
 
 Hard rules (the pipeline blocks or escalates anything else):
